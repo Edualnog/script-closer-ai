@@ -7,29 +7,45 @@ import { Loader2, Copy, AlertCircle, Lock } from 'lucide-react'
 import Link from 'next/link'
 
 export default function GeneratePage() {
+    const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [userPlan, setUserPlan] = useState('free')
+    const [error, setError] = useState<string | null>(null)
+    const [result, setResult] = useState<any | null>(null)
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         context: 'WhatsApp',
         leadType: 'morno',
+        region: 'Neutro',
+        image: null as string | null, // Can be base64 or URL
     })
-    const [result, setResult] = useState<any>(null)
-    const [error, setError] = useState<string | null>(null)
 
-    const supabase = createClient()
-    const router = useRouter()
+    // ... (rest of imports/setup)
 
     useEffect(() => {
-        async function loadPlan() {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data } = await supabase.from('users').select('plano_atual').eq('id', user.id).single()
-                if (data) setUserPlan(data.plano_atual)
+        // ... (plan loading)
+
+        // Check for pending data
+        const pendingData = localStorage.getItem('pending_script_generation')
+        if (pendingData) {
+            try {
+                const parsed = JSON.parse(pendingData)
+                if (Date.now() - parsed.timestamp < 3600000) {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: parsed.name || '',
+                        description: parsed.description || '',
+                        context: parsed.context || 'WhatsApp',
+                        leadType: parsed.leadType || 'morno',
+                        region: parsed.region || 'Neutro',
+                        image: parsed.imageUrl || null
+                    }))
+                }
+            } catch (e) {
+                console.error('Failed to parse pending script data', e)
             }
         }
-        loadPlan()
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +103,32 @@ export default function GeneratePage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Imagem do Produto (Opcional)</label>
+
+                            {formData.image ? (
+                                <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 group">
+                                    <img
+                                        src={formData.image}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, image: null })}
+                                        className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-medium"
+                                    >
+                                        Remover
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:bg-gray-50 transition-colors">
+                                    <p className="text-sm text-gray-500">Nenhuma imagem selecionada</p>
+                                    <p className="text-xs text-gray-400 mt-1">A IA usa a imagem para identificar detalhes visuais</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700">Nome do Produto/Serviço</label>
                             <input
                                 type="text"
@@ -121,6 +163,24 @@ export default function GeneratePage() {
                                 <option value="Ligação">Ligação Telefônica</option>
                                 <option value="Email">Email</option>
                                 <option value="Presencial">Presencial / Loja</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Região / Sotaque</label>
+                            <select
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                value={formData.region}
+                                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                            >
+                                <option value="Neutro">Neutro (Padrão)</option>
+                                <option value="São Paulo">São Paulo (SP)</option>
+                                <option value="Rio de Janeiro">Rio de Janeiro (RJ)</option>
+                                <option value="Minas Gerais">Minas Gerais (MG)</option>
+                                <option value="Sul">Sul (RS/SC/PR)</option>
+                                <option value="Nordeste">Nordeste</option>
+                                <option value="Norte">Norte</option>
+                                <option value="Centro-Oeste">Centro-Oeste</option>
                             </select>
                         </div>
 

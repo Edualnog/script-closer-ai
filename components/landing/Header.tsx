@@ -29,7 +29,7 @@ export function Header() {
                     <div>
                         <Link
                             href="/register"
-                            className="bg-[#635BFF] hover:bg-[#534be0] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                            className="bg-[#171717] hover:bg-gray-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors shadow-lg shadow-gray-500/20"
                         >
                             Começar grátis
                         </Link>

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, context, leadType, image, productId } = body
+    const { name, description, context, leadType, region, image, productId } = body
 
     // 1. Get User Info & Utils
     const { data: userData } = await supabase
@@ -65,6 +65,7 @@ export async function POST(request: Request) {
             description,
             context,
             leadType,
+            region,
             imageBase64: image
         })
 

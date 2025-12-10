@@ -5,17 +5,12 @@ export interface GenerateScriptInput {
     description: string
     context: string
     leadType: 'frio' | 'morno' | 'quente'
+    region?: string
     imageBase64?: string
 }
 
 export async function generateSalesScript(input: GenerateScriptInput) {
-    if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OPENAI_API_KEY is not defined')
-    }
-
-    const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    })
+    // ...
 
     const systemPrompt = `
     Você é um especialista em Copywriting e Vendas Diretas (Direct Response).
@@ -43,6 +38,12 @@ export async function generateSalesScript(input: GenerateScriptInput) {
     - Lead Morno: Conecte com o problema, mostre a solução.
     - Lead Quente: Seja direto, foco em oferta e escassez.
     
+    Regionalismo Natural:
+    - A região alvo é: ${input.region || 'Neutro / Geral'}
+    - Use o sotaque/gírias locais de forma SUTIL e NATURAL para gerar conexão (Rapport).
+    - NÃO force a barra. Se for São Paulo, use um tom mais direto, "meu", etc. Se for Rio, algo mais despojado. Se for Sul, "tchê" apenas se fizer muito sentido, prefira construções gramaticais locais.
+    - O objetivo é parecer alguém da região falando, não um personagem caricato.
+    
     Contexto da venda: ${input.context}
   `
 
@@ -54,14 +55,16 @@ export async function generateSalesScript(input: GenerateScriptInput) {
     ]
 
     if (input.imageBase64) {
-        // Determine the image type roughly or just assume jpeg/png header is stripped or present? 
-        // The frontend usually sends data:image/jpeg;base64,... 
-        // We'll pass it directly if it has the prefix, or add it if missing.
-        // Ensure input.imageBase64 is the full data URL.
-        const isValidDataUrl = input.imageBase64.startsWith('data:image');
-        const imageUrl = isValidDataUrl
-            ? input.imageBase64
-            : `data:image/jpeg;base64,${input.imageBase64}`;
+        // Support both Base64 (data:image...) and Public URLs (https://...)
+        const isUrl = input.imageBase64.startsWith('http');
+        const isDataUrl = input.imageBase64.startsWith('data:image');
+
+        let imageUrl = input.imageBase64;
+
+        if (!isUrl && !isDataUrl) {
+            // Assume it's a raw base64 string, append prefix
+            imageUrl = `data:image/jpeg;base64,${input.imageBase64}`;
+        }
 
         userContent.push({
             type: "image_url",

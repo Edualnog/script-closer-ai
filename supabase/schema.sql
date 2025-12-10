@@ -108,7 +108,13 @@ create table public.videos (
 alter table public.videos enable row level security;
 create policy "Users can crud own videos" on public.videos for all using (auth.uid() = user_id);
 
--- STORAGE BUCKETS (Optional but good for images)
--- insert into storage.buckets (id, name) values ('products', 'products');
--- create policy "Authenticated can upload" on storage.objects for insert to authenticated with check (bucket_id = 'products');
--- create policy "Public Access" on storage.objects for select to public using (bucket_id = 'products');
+-- STORAGE BUCKETS
+insert into storage.buckets (id, name, public) values ('products', 'products', true)
+on conflict (id) do nothing;
+
+-- Allow Public Access (Read)
+create policy "Public Access" on storage.objects for select using ( bucket_id = 'products' );
+
+-- Allow Public Uploads (Anon & Authenticated for 'try before buy' flow)
+-- For better security in prod, specific folders or signed URLs preferred, but for this MVP:
+create policy "Public Upload" on storage.objects for insert with check ( bucket_id = 'products' );
