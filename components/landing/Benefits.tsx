@@ -3,23 +3,23 @@ import { MessageCircle, Zap, Image, History } from 'lucide-react'
 const benefits = [
     {
         icon: MessageCircle,
-        title: 'Nunca mais sofra com "o que responder?"',
-        description: 'Tenha a resposta perfeita na ponta da língua para qualquer situação.',
+        title: 'Nunca mais trave no "o que responder?"',
+        description: 'Tenha a resposta perfeita na ponta da língua e não perca o timing da venda.',
     },
     {
         icon: Zap,
         title: 'Otimizado para WhatsApp e Instagram',
-        description: 'Formatos curtos, diretos e prontos para conversão em chat.',
+        description: 'Formatos curtos e diretos. Aumente sua taxa de resposta em até 3x.',
     },
     {
         icon: Image,
         title: 'Transforme foto em argumento',
-        description: ' nossa IA "enxerga" os detalhes do seu produto que vendem mais.',
+        description: 'Nossa IA "enxerga" os detalhes do produto e cria desejos que você não viu.',
     },
     {
         icon: History,
-        title: 'Follow-up inteligente',
-        description: 'Saiba exatamente quando e como chamar o cliente de volta.',
+        title: 'Follow-up sem ser chato',
+        description: 'Saiba exatamente quando chamar o cliente de volta e recupere vendas perdidas.',
     },
 ]
 

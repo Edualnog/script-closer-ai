@@ -3,17 +3,17 @@ export function Testimonials() {
         {
             name: 'Mariana',
             role: 'Loja de Perfumes',
-            quote: 'Vendi 3 perfumes no mesmo dia usando o ScriptCloser. A IA pegou detalhes que eu nem tinha notado.',
+            quote: 'Vendi 3 perfumes no mesmo dia usando o ScriptCloser. A IA pegou detalhes das notas olfativas que eu nem tinha notado.',
         },
         {
             name: 'Carlos',
             role: 'Consultor de Vendas',
-            quote: 'Economizei 1h por dia respondendo objeções. É como ter um copywriter sênior do meu lado.',
+            quote: 'Economizei 2h por dia respondendo objeções de preço no WhatsApp. É como ter um copywriter sênior do meu lado.',
         },
         {
             name: 'Júlia',
-            role: 'Empreendedora',
-            quote: 'Fiz meu primeiro R$ 1.000 copiando e colando os scripts. Simples assim.',
+            role: 'Infoprodutora',
+            quote: 'Fiz meu primeiro R$ 1.000 em um fim de semana apenas copiando e colando os scripts de recuperação de boleto.',
         },
     ]
 

@@ -139,7 +139,7 @@ export function Pricing() {
                     </div>
 
                     {/* PRO */}
-                    <div className="p-8 rounded-2xl border-2 border-[#007AFF] bg-white relative shadow-xl shadow-blue-500/10 transform md:-translate-y-4 z-10 transition-all">
+                    <div className="p-8 rounded-2xl border-2 border-[#007AFF] bg-blue-50/30 relative shadow-xl shadow-blue-500/10 transform md:-translate-y-4 z-10 transition-all">
                         {isAnnual && (
                             <div className="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full z-20">
                                 {discountPro}% OFF
@@ -155,6 +155,11 @@ export function Pricing() {
                                 R$<AnimatedPrice value={currentProPrice} />
                             </span>
                             <span className="text-gray-500"> / mês</span>
+                            {isAnnual && (
+                                <p className="text-xs text-green-600 font-medium mt-1">
+                                    Economize R$ 20,00 por mês
+                                </p>
+                            )}
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
                             Plano ideal para quem vende todos os dias.
@@ -216,6 +221,11 @@ export function Pricing() {
                                 R$<AnimatedPrice value={currentProPlusPrice} />
                             </span>
                             <span className="text-gray-500"> / mês</span>
+                            {isAnnual && (
+                                <p className="text-xs text-green-600 font-medium mt-1">
+                                    Economize R$ 40,00 por mês
+                                </p>
+                            )}
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
                             Experiência premium para alto volume.
