@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     return (
         <div className="flex h-screen">
             <Sidebar />
-            <main className="pl-64 min-h-screen bg-background text-foreground">
+            <main className="pl-64 min-h-screen bg-gray-50 text-foreground w-full">
                 <div className="py-10">
                     <div className="px-4 sm:px-6 lg:px-8">
                         {children}

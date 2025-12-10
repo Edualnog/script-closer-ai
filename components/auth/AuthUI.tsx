@@ -186,7 +186,13 @@ function StarsBackground() {
 }
 
 // Forms
+import { PostSignupPricing } from "@/components/auth/PostSignupPricing";
+
+// ... [previous code]
+
+// Forms
 function SignInForm() {
+    // ... [same implementation as before]
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -265,7 +271,7 @@ function SignInForm() {
     );
 }
 
-function SignUpForm() {
+function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -297,13 +303,8 @@ function SignUpForm() {
             if (error) throw error;
 
             if (data.session) {
-                router.refresh();
-                const hasPendingScript = localStorage.getItem('pending_script_generation');
-                if (hasPendingScript) {
-                    router.push('/app/generate');
-                } else {
-                    router.push('/app');
-                }
+                // Instead of redirecting immediately, trigger success callback (show pricing)
+                onSuccess();
             } else {
                 setMessage('Cadastro realizado! Verifique seu email para confirmar a conta.');
             }
@@ -381,7 +382,22 @@ function SignUpForm() {
 // Container
 export function AuthUI({ initialIsSignIn = true }: { initialIsSignIn?: boolean }) {
     const [isSignIn, setIsSignIn] = useState(initialIsSignIn);
+    const [showPricing, setShowPricing] = useState(false);
+    const router = useRouter();
+
     const toggleForm = () => setIsSignIn((prev) => !prev);
+
+    const handlePlanSelect = (plan: string) => {
+        // Logic to handle plan selection (e.g., redirect to Stripe)
+        // For now, regardless of plan, we go to /app as per request flow "to know which plan... but appear only first time"
+        // In a real app, this would trigger checkout for paid plans.
+        console.log("Selected plan:", plan);
+        router.push('/app');
+    };
+
+    const handleClosePricing = () => {
+        router.push('/app');
+    };
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center p-4">
@@ -393,7 +409,7 @@ export function AuthUI({ initialIsSignIn = true }: { initialIsSignIn?: boolean }
       `}</style>
 
             {/* Dynamic Background */}
-            <StarsBackground />
+            <StarsBackground /> {/* Assume StarsBackground is defined above in the file, keeping it */}
 
             {/* Decorative Gradients for Space Effect */}
             <div className="fixed inset-0 bg-gradient-to-b from-black via-slate-900/40 to-slate-900/0 pointer-events-none z-0" />
@@ -408,21 +424,25 @@ export function AuthUI({ initialIsSignIn = true }: { initialIsSignIn?: boolean }
                 </Link>
             </div>
 
-            {/* Main Card */}
-            <div className="relative z-10 w-full max-w-[420px] bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl ring-1 ring-white/5 animate-in fade-in zoom-in duration-500">
+            {showPricing ? (
+                <PostSignupPricing onSelectPlan={handlePlanSelect} onClose={handleClosePricing} />
+            ) : (
+                /* Main Card */
+                <div className="relative z-10 w-full max-w-[420px] bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl ring-1 ring-white/5 animate-in fade-in zoom-in duration-500">
 
-                {isSignIn ? <SignInForm /> : <SignUpForm />}
+                    {isSignIn ? <SignInForm /> : <SignUpForm onSuccess={() => setShowPricing(true)} />}
 
-                <div className="mt-6 text-center text-sm text-gray-400">
-                    {isSignIn ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
-                    <button
-                        className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-all"
-                        onClick={toggleForm}
-                    >
-                        {isSignIn ? "Inscrever-se" : "Entrar"}
-                    </button>
+                    <div className="mt-6 text-center text-sm text-gray-400">
+                        {isSignIn ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+                        <button
+                            className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-all"
+                            onClick={toggleForm}
+                        >
+                            {isSignIn ? "Inscrever-se" : "Entrar"}
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
