@@ -1,22 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, PlusCircle, Package, CreditCard, LogOut, Sparkles } from 'lucide-react'
+import { LayoutDashboard, PenTool, Package, CreditCard, LogOut, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const navigation = [
-    { name: 'Dashboard', href: '/app', icon: Home },
-    { name: 'Novo Script', href: '/app/generate', icon: PlusCircle },
+    { name: 'Visão Geral', href: '/app', icon: LayoutDashboard },
+    { name: 'Gerar Script', href: '/app/generate', icon: PenTool },
     { name: 'Meus Produtos', href: '/app/products', icon: Package },
-    { name: 'Planos & Billing', href: '/app/billing', icon: CreditCard },
+    { name: 'Planos e Fatura', href: '/app/billing', icon: CreditCard },
 ]
 
 export function Sidebar() {
-    const pathname = usePathname()
     const router = useRouter()
+    const pathname = usePathname()
     const supabase = createClient()
 
     const handleSignOut = async () => {
@@ -26,56 +25,56 @@ export function Sidebar() {
     }
 
     return (
-        <div className="flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed">
-            <div className="flex items-center justify-center h-16 border-b border-gray-200">
-                <Sparkles className="h-6 w-6 text-indigo-600 mr-2" />
-                <span className="text-xl font-bold text-gray-800">ScriptCloser</span>
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto glass border-r border-white/5 px-6 pb-4 w-64 h-screen fixed left-0 top-0">
+            <div className="flex h-16 shrink-0 items-center gap-2 mt-4">
+                <Sparkles className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl text-foreground">ScriptCloser</span>
             </div>
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                <nav className="flex-1 px-2 py-4 space-y-1">
-                    {navigation.map((item) => {
-                        const isActive = pathname === item.href
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={cn(
-                                    isActive
-                                        ? 'bg-indigo-50 text-indigo-600'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                                    'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
-                                )}
-                            >
-                                <item.icon
-                                    className={cn(
-                                        isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500',
-                                        'mr-3 flex-shrink-0 h-6 w-6'
-                                    )}
-                                    aria-hidden="true"
-                                />
-                                {item.name}
-                            </Link>
-                        )
-                    })}
-                </nav>
-            </div>
-            <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-                <button
-                    onClick={handleSignOut}
-                    className="flex-shrink-0 w-full group block"
-                >
-                    <div className="flex items-center">
-                        <div>
-                            <LogOut className="inline-block h-9 w-9 rounded-full text-gray-400 p-1 border border-gray-200" />
-                        </div>
-                        <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                                Sair
-                            </p>
-                        </div>
-                    </div>
-                </button>
-            </div>
+            <nav className="flex flex-1 flex-col">
+                <ul role="list" className="flex flex-1 flex-col gap-y-7">
+                    <li>
+                        <ul role="list" className="-mx-2 space-y-1">
+                            {navigation.map((item) => {
+                                const isActive = pathname === item.href
+                                return (
+                                    <li key={item.name}>
+                                        <Link
+                                            href={item.href}
+                                            className={cn(
+                                                isActive
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
+                                                'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all'
+                                            )}
+                                        >
+                                            <item.icon
+                                                className={cn(
+                                                    isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
+                                                    'h-6 w-6 shrink-0'
+                                                )}
+                                                aria-hidden="true"
+                                            />
+                                            {item.name}
+                                        </Link>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </li>
+                    <li className="mt-auto">
+                        <button
+                            onClick={handleSignOut}
+                            className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 w-full transition-colors"
+                        >
+                            <LogOut
+                                className="h-6 w-6 shrink-0 text-muted-foreground group-hover:text-red-500"
+                                aria-hidden="true"
+                            />
+                            Sair
+                        </button>
+                    </li>
+                </ul>
+            </nav>
         </div>
     )
 }

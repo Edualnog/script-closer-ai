@@ -60,7 +60,7 @@ export default function RegisterPage() {
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
                     Já tem uma conta?{' '}
-                    <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                    <Link href="/login" className="font-medium text-[#635BFF] hover:text-[#534be0]">
                         Entrar
                     </Link>
                 </p>
@@ -137,7 +137,7 @@ export default function RegisterPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#635BFF] hover:bg-[#534be0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#635BFF] disabled:opacity-50"
                         >
                             {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Criar conta'}
                         </button>

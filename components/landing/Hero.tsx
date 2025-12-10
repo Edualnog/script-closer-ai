@@ -1,47 +1,55 @@
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 
 export function Hero() {
     return (
-        <div className="relative bg-white overflow-hidden">
-            <div className="max-w-7xl mx-auto">
-                <div className="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
-                    <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-                        <div className="sm:text-center lg:text-left">
-                            <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                                <span className="block xl:inline">Scripts de vendas geniais</span>{' '}
-                                <span className="block text-indigo-600 xl:inline">com IA</span>
-                            </h1>
-                            <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                                Gere roteiros persuasivos, respostas a objeções e materiais de marketing a partir de uma simples foto do seu produto. Feche mais vendas, mais rápido.
-                            </p>
-                            <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                                <div className="rounded-md shadow">
-                                    <Link
-                                        href="/register"
-                                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
-                                    >
-                                        Começar grátis
-                                    </Link>
-                                </div>
-                                <div className="mt-3 sm:mt-0 sm:ml-3">
-                                    <Link
-                                        href="#how-it-works"
-                                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10"
-                                    >
-                                        Como funciona
-                                    </Link>
-                                </div>
-                            </div>
+        <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+
+            {/* Headlines */}
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-[#171717] mb-6">
+                Venda muito mais com<br className="hidden md:block" /> scripts prontos feitos sob medida.
+            </h1>
+            <p className="max-w-2xl mx-auto text-xl text-gray-500 mb-12 leading-relaxed">
+                Envie uma foto do seu produto e receba mensagens de abertura, objeções, roteiros completos e follow-ups otimizados para WhatsApp e Instagram.
+            </p>
+
+            {/* Manus-style Input Placeholder */}
+            <div className="max-w-3xl mx-auto mb-12">
+                <div className="relative group cursor-default">
+                    <div className="w-full h-16 md:h-20 bg-white border border-gray-200 rounded-2xl shadow-sm flex items-center px-4 md:px-6 transition-shadow hover:shadow-md">
+                        {/* Fake Upload Button */}
+                        <div className="h-10 w-10 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 mr-4 text-gray-400">
+                            <Plus className="h-5 w-5" />
                         </div>
-                    </main>
+                        {/* Fake Placeholder Text */}
+                        <span className="text-gray-400 text-lg md:text-xl font-medium">Descreva seu produto...</span>
+                    </div>
                 </div>
+                <p className="mt-4 text-sm text-gray-400">
+                    *Apenas ilustração. O input real fica dentro da plataforma.
+                </p>
             </div>
-            <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 bg-gray-50 flex items-center justify-center">
-                {/* Placeholder for Hero Image */}
-                <div className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full flex items-center justify-center text-gray-400 bg-gray-200">
-                    <span className="text-xl font-medium">[Imagem Demonstrativa do App]</span>
-                </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+                <Link
+                    href="/register"
+                    className="w-full sm:w-auto px-8 py-3.5 bg-[#635BFF] hover:bg-[#534be0] text-white font-semibold rounded-lg text-lg transition-all shadow-sm shadow-indigo-200"
+                >
+                    Começar grátis
+                </Link>
+                <Link
+                    href="#how-it-works"
+                    className="w-full sm:w-auto px-8 py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-lg text-lg transition-colors border border-gray-200"
+                >
+                    Ver como funciona
+                </Link>
             </div>
-        </div>
+
+            <p className="text-sm text-gray-500">
+                3 scripts gratuitos por mês. Sem cartão de crédito.
+            </p>
+
+        </section>
     )
 }
