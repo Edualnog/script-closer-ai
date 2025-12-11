@@ -6,6 +6,7 @@ create table public.users (
   id uuid primary key references auth.users(id) on delete cascade not null,
   email text not null,
   nome text,
+  avatar_url text,
   plano_atual text default 'free' check (plano_atual in ('free', 'pro', 'pro_plus')),
   stripe_customer_id text,
   stripe_subscription_id text,
@@ -118,3 +119,12 @@ create policy "Public Access" on storage.objects for select using ( bucket_id = 
 -- Allow Public Uploads (Anon & Authenticated for 'try before buy' flow)
 -- For better security in prod, specific folders or signed URLs preferred, but for this MVP:
 create policy "Public Upload" on storage.objects for insert with check ( bucket_id = 'products' );
+
+-- AVATARS BUCKET
+insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+create policy "Avatar Public Access" on storage.objects for select using ( bucket_id = 'avatars' );
+create policy "Avatar User Upload" on storage.objects for insert with check ( bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1] );
+create policy "Avatar User Update" on storage.objects for update using ( bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1] );
+

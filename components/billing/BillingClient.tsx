@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, User, Zap } from "lucide-react";
+import { Check, Loader2, User, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BillingClientProps {
@@ -11,6 +11,7 @@ interface BillingClientProps {
         id: string;
         email: string;
         nome: string | null;
+        avatar_url?: string | null;
         plano_atual: string;
     };
 }
@@ -114,6 +115,56 @@ export function BillingClient({ user }: BillingClientProps) {
         }
     };
 
+    // Avatar State
+    const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || "");
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setUploadingAvatar(true);
+            if (!event.target.files || event.target.files.length === 0) {
+                throw new Error('You must select an image to upload.');
+            }
+
+            const file = event.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // Upload to Supabase Storage
+            let { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            // Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // Update User Profile
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ avatar_url: publicUrl })
+                .eq('id', user.id);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            setAvatarUrl(publicUrl);
+            router.refresh(); // Refresh to propagate changes to UserNav (server component needed usually, but context helps)
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            alert('Erro ao fazer upload da imagem.');
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto pb-20 pt-8 px-4 space-y-12">
 
@@ -125,10 +176,32 @@ export function BillingClient({ user }: BillingClientProps) {
 
             {/* Profile Section */}
             <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-indigo-600" />
+                <div className="flex items-center gap-6 mb-8">
+                    <div className="relative group">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-100 group-hover:border-indigo-100 transition-colors">
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-8 h-8 text-gray-400" />
+                            )}
+                            {uploadingAvatar && (
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                </div>
+                            )}
+                        </div>
+                        <label className="absolute bottom-0 right-0 bg-white border border-gray-200 rounded-full p-1.5 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                            <Camera className="w-3 h-3 text-gray-500" />
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleAvatarUpload}
+                                disabled={uploadingAvatar}
+                                className="hidden"
+                            />
+                        </label>
                     </div>
+
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Seu Perfil</h2>
                         <p className="text-sm text-gray-500">Informações visíveis na sua conta</p>

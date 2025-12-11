@@ -3,6 +3,7 @@ import { MobileNav } from '@/components/dashboard/MobileNav'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { OnboardingWizard } from '@/components/dashboard/OnboardingWizard'
+import { UserNav } from '@/components/dashboard/UserNav'
 
 export default async function DashboardLayout({
     children,
@@ -30,7 +31,8 @@ export default async function DashboardLayout({
                     </div>
                 </div>
             </main>
-            <OnboardingWizard />
+            <OnboardingWizard userId={user.id} />
+            <UserNav />
         </div>
     )
 }

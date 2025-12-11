@@ -4,25 +4,28 @@ import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight, X, MessageCircle, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function OnboardingWizard() {
+export function OnboardingWizard({ userId }: { userId: string }) {
     const [isOpen, setIsOpen] = useState(false);
     const [step, setStep] = useState(1);
 
     useEffect(() => {
-        // Check local storage for onboarding completion
-        const hasCompletedOnboarding = localStorage.getItem("script_closer_onboarding_completed");
+        // Check local storage for onboarding completion UNIQUE to this user
+        const key = `script_closer_onboarding_completed_${userId}`;
+        const hasCompletedOnboarding = localStorage.getItem(key);
+
         if (!hasCompletedOnboarding) {
             // Small delay for entrance animation
             setTimeout(() => setIsOpen(true), 1000);
         }
-    }, []);
+    }, [userId]);
 
     const handleNext = () => {
         setStep(prev => prev + 1);
     };
 
     const handleComplete = () => {
-        localStorage.setItem("script_closer_onboarding_completed", "true");
+        const key = `script_closer_onboarding_completed_${userId}`;
+        localStorage.setItem(key, "true");
         setIsOpen(false);
     };
 

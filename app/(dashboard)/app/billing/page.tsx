@@ -18,6 +18,7 @@ export default async function BillingPage() {
         id: user.id,
         email: user.email!,
         nome: userData?.nome || user.user_metadata?.full_name || null,
+        avatar_url: userData?.avatar_url || null,
         plano_atual: userData?.plano_atual || 'free'
     }
 

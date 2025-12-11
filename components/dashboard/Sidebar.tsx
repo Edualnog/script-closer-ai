@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { PlusCircle, Search, Library, Settings, LogOut, Sparkles, Folder, Plus, Home, Megaphone } from 'lucide-react'
+import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -163,26 +163,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
                         </ul>
                     </li>
 
-                    <li className="mt-auto">
-                        <Link
-                            href="/app/billing"
-                            onClick={handleLinkClick}
-                            className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors mb-1"
-                        >
-                            <Settings className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-gray-500" />
-                            Planos e Conta
-                        </Link>
-                        <button
-                            onClick={handleSignOut}
-                            className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-medium leading-6 text-gray-500 hover:bg-red-50 hover:text-red-600 w-full transition-colors"
-                        >
-                            <LogOut
-                                className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-red-600"
-                                aria-hidden="true"
-                            />
-                            Sair
-                        </button>
-                    </li>
+
                 </ul>
             </nav>
         </div>
