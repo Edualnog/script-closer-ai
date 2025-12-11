@@ -18,7 +18,7 @@ export const PLANS = {
     },
     pro: {
         name: 'Pro',
-        price: 3990, // in cents
+        price: 1990, // in cents
         limits: {
             scripts: 20,
             mockups: 0,
@@ -33,7 +33,7 @@ export const PLANS = {
     },
     pro_plus: {
         name: 'Pro+',
-        price: 8990, // in cents
+        price: 5990, // in cents
         limits: {
             scripts: 20,
             mockups: 10,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { generateSalesScript } from '@/lib/ai/generator'
 import { getPlanDetails } from '@/lib/plans'
 
@@ -11,8 +12,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { name, description, context, leadType, region, image, productId } = body
+    // Initialize Admin Client for Usage Stats (Bypassing RLS)
+    const adminDb = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        }
+    )
+
+    let body;
+    try {
+        const text = await request.text();
+        if (!text) throw new Error("Empty request body");
+        body = JSON.parse(text);
+    } catch (e) {
+        return NextResponse.json({ error: 'Invalid Request Body (Empty or Malformed)' }, { status: 400 });
+    }
+    const { name, description, context, leadType, region, image, productId, productContext } = body
 
     // 1. Get User Info & Utils
     const { data: userData } = await supabase
@@ -27,8 +47,8 @@ export async function POST(request: Request) {
     const date = new Date()
     const currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
-    // 2. Check Usage Limits
-    let { data: stats } = await supabase
+    // 2. Check Usage Limits (Using Admin DB)
+    let { data: stats } = await adminDb
         .from('usage_stats')
         .select('*')
         .eq('user_id', user.id)
@@ -37,7 +57,7 @@ export async function POST(request: Request) {
 
     if (!stats) {
         // Initialize stats if not exists
-        const { data: newStats, error } = await supabase
+        const { data: newStats, error } = await adminDb
             .from('usage_stats')
             .insert({
                 user_id: user.id,
@@ -48,6 +68,17 @@ export async function POST(request: Request) {
             })
             .select()
             .single()
+
+        if (error) {
+            console.error("DEBUG: Failed to initialize usage stats", error);
+            throw new Error("Failed to initialize usage stats: " + error.message);
+        }
+
+        if (!newStats) {
+            console.error("DEBUG: Inserted stats returned null");
+            throw new Error("Failed to create usage stats record (null return)");
+        }
+
         stats = newStats
     }
 
@@ -66,19 +97,23 @@ export async function POST(request: Request) {
             context,
             leadType,
             region,
-            imageBase64: image
+            imageBase64: image,
+            productContext // Pass the previous context if available
         })
 
-        // 4. Save to Database
+        // 4. Save to Database (User scoped is fine/better for ownership)
         let finalProductId = productId
 
         if (!finalProductId) {
             // Create new product
+            // Use AI-generated title if the provided name is generic or if AI provided a better one
+            const finalName = aiResult.nome_projeto || name;
+
             const { data: newProduct, error: prodError } = await supabase
                 .from('products')
                 .insert({
                     user_id: user.id,
-                    nome: name,
+                    nome: finalName,
                     descricao: description,
                     segmento: 'Geral', // Could infer from AI
                     imagem_url: null, // Would upload image to storage here if real
@@ -107,8 +142,17 @@ export async function POST(request: Request) {
 
         if (scriptError) throw scriptError
 
-        // 5. Increment Usage
-        await supabase
+        // Update product name if it was generic "Novo Script" or if we have a better one from AI
+        if (aiResult.nome_projeto && finalProductId) {
+            await supabase
+                .from('products')
+                .update({ nome: aiResult.nome_projeto })
+                .eq('id', finalProductId)
+                .eq('nome', 'Novo Script') // Only overwrite if it's the default/generic name to avoid overwriting user custom names
+        }
+
+        // 5. Increment Usage (Using Admin DB)
+        await adminDb
             .from('usage_stats')
             .update({ scripts_gerados: stats.scripts_gerados + 1, updated_at: new Date().toISOString() })
             .eq('id', stats.id)

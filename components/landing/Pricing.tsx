@@ -44,12 +44,12 @@ export function Pricing() {
     const isAnnual = billingInterval === 'annually'
 
     // Monthly prices (Base)
-    const priceProMonthly = 49.90
-    const priceProPlusMonthly = 129.90
+    const priceProMonthly = 19.90
+    const priceProPlusMonthly = 59.90
 
     // Annual prices (Discounted per month)
-    const priceProAnnual = 29.90
-    const priceProPlusAnnual = 89.90
+    const priceProAnnual = 9.90
+    const priceProPlusAnnual = 39.90
 
     // Calculate discount percentage
     const discountPro = Math.round(((priceProMonthly - priceProAnnual) / priceProMonthly) * 100)
