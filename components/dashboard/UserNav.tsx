@@ -19,9 +19,8 @@ export function UserNav() {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                // Initial fetch
                 setUserEmail(user.email || "Usuário");
-
-                // Fetch extra profile data
                 const { data: profile } = await supabase
                     .from('users')
                     .select('avatar_url')
@@ -31,6 +30,30 @@ export function UserNav() {
                 if (profile?.avatar_url) {
                     setAvatarUrl(profile.avatar_url);
                 }
+
+                // Realtime subscription for avatar updates
+                const channel = supabase
+                    .channel(`user_avatar_${user.id}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'users',
+                            filter: `id=eq.${user.id}`
+                        },
+                        (payload) => {
+                            const newAvatar = (payload.new as any).avatar_url;
+                            if (newAvatar) {
+                                setAvatarUrl(newAvatar);
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                return () => {
+                    supabase.removeChannel(channel);
+                };
             }
         };
         getUser();

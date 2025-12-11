@@ -1,6 +1,7 @@
 import { Header } from '@/components/landing/Header'
 import { Hero } from '@/components/landing/Hero'
 import { HowItWorks } from '@/components/landing/HowItWorks'
+import { AuthoritySection } from '@/components/landing/AuthoritySection'
 import { DemoSection } from '@/components/landing/DemoSection'
 import { Benefits } from '@/components/landing/Benefits'
 import { Testimonials } from '@/components/landing/Testimonials'
@@ -14,6 +15,7 @@ export default function LandingPage() {
       <Header />
       <Hero />
       <HowItWorks />
+      <AuthoritySection />
       <DemoSection />
       <Benefits />
       <Testimonials />
