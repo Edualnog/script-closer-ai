@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Loader2, AlertCircle, ArrowLeft, CheckCircle2, MessageSquare, Wand2, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
@@ -46,7 +46,7 @@ export default function GeneratePage() {
         processGeneration();
     }, [router]);
 
-    const generateScript = async (data: any) => {
+    const generateScript = async (data: any, refinement?: string) => {
         setLoading(true);
         setError(null);
 
@@ -59,7 +59,8 @@ export default function GeneratePage() {
                 region: data.region || 'Neutro',
                 image: data.imageUrl || null,
                 // Pass the context if available (for lead_response mode)
-                productContext: data.productContext || null
+                productContext: data.productContext || null,
+                refinementInstruction: refinement
             };
 
             const res = await fetch('/api/generate-script', {
@@ -100,15 +101,19 @@ export default function GeneratePage() {
         }
     };
 
-
-
-    // ... existing imports
+    const handleRefine = (instruction: string) => {
+        const pendingData = localStorage.getItem('pending_script_generation');
+        if (pendingData) {
+            const parsed = JSON.parse(pendingData);
+            generateScript(parsed, instruction);
+        }
+    };
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
                 <TextShimmerWave className='text-3xl font-semibold mb-2'>
-                    Gerando script...
+                    {result ? "Refinando script..." : "Gerando script..."}
                 </TextShimmerWave>
                 <p className="mt-2 text-gray-500 max-w-md">
                     Isso pode levar alguns segundos enquanto nossa IA cria a melhor estratégia.
@@ -117,13 +122,31 @@ export default function GeneratePage() {
         );
     }
 
+    function WhatsAppButton({ text }: { text: string }) {
+        const handleShare = () => {
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        };
+
+        return (
+            <button
+                onClick={handleShare}
+                className="flex items-center gap-2 p-2 rounded-lg text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors"
+                title="Abrir no WhatsApp"
+            >
+                <MessageSquare className="w-4 h-4" />
+                <span className="text-xs font-semibold sr-only sm:not-sr-only">WhatsApp</span>
+            </button>
+        )
+    }
+
     if (error) {
         return (
             <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-sm border border-red-100 text-center">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
                     <AlertCircle className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Não foi possível gerar o script</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">ão foi possível gerar o script</h3>
                 <p className="text-gray-500 mb-6">{error}</p>
                 <button
                     onClick={() => router.push('/app')}
@@ -157,7 +180,17 @@ export default function GeneratePage() {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Seu Script de Vendas</h1>
-            <p className="text-gray-500 mb-8">Personalizado para sua estratégia.</p>
+            <div className="flex flex-wrap items-center gap-2 mb-8">
+                <button onClick={() => handleRefine('Resuma o texto, seja mais direto.')} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium hover:bg-indigo-100 transition-colors">
+                    <Wand2 className="w-3 h-3" /> Encurtar
+                </button>
+                <button onClick={() => handleRefine('Seja mais agressivo e focado no fechamento ("Hard Sell").')} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-full text-xs font-medium hover:bg-red-100 transition-colors">
+                    <Zap className="w-3 h-3" /> Mais Agressivo
+                </button>
+                <button onClick={() => handleRefine('Seja mais amigável, empático e focado em relacionamento ("Soft Sell").')} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium hover:bg-green-100 transition-colors">
+                    <MessageSquare className="w-3 h-3" /> Mais Amigável
+                </button>
+            </div>
 
             {/* Results Display */}
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -168,7 +201,8 @@ export default function GeneratePage() {
                         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             👋 Mensagem de Abertura
                         </h3>
-                        <div className="flex">
+                        <div className="flex items-center gap-2">
+                            <WhatsAppButton text={result.mensagem_abertura || ''} />
                             <CopyButton
                                 text={result.mensagem_abertura || ''}
                                 className="bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 p-2 rounded-lg transition-colors"
@@ -186,7 +220,8 @@ export default function GeneratePage() {
                         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                             💬 Roteiro de Conversa
                         </h3>
-                        <div className="flex">
+                        <div className="flex items-center gap-2">
+                            <WhatsAppButton text={result.roteiro_conversa || ''} />
                             <CopyButton
                                 text={result.roteiro_conversa || ''}
                                 className="bg-gray-50 hover:bg-indigo-50 text-gray-500 hover:text-indigo-600 p-2 rounded-lg transition-colors"
@@ -213,7 +248,8 @@ export default function GeneratePage() {
                                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                                             {key.replace(/_/g, ' ')}
                                         </h4>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <WhatsAppButton text={content} />
                                             <CopyButton
                                                 text={content}
                                                 className="text-gray-400 hover:text-indigo-600"

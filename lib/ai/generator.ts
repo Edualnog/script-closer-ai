@@ -7,6 +7,7 @@ export interface GenerateScriptInput {
     leadType: 'frio' | 'morno' | 'quente'
     region?: string
     imageBase64?: string
+    refinementInstruction?: string
     productContext?: { description: string, timestamp?: number }
 }
 
@@ -87,8 +88,25 @@ export async function generateSalesScript(input: GenerateScriptInput) {
        - Direto e Prático. Facilite o "SIM".
        - "Tenho um horário vago amanhã às 14h, bora resolver isso?"
 
-    Regionalização:
-    - O lead é de: ${input.region || 'Brasil (Geral)'}. Se for específico (ex: Sul, Nordeste), adapte *sutilmente* o vocabulário, mas sem caricatura.
+    Regionalização (CRÍTICO PARA NATURALIDADE):
+    - O lead é de: ${input.region || 'Brasil (Geral)'}. Adapte o vocabulário e pronomes:
+      ${input.region === 'Sul' ? `
+      - Use "TU" e conjugue os verbos na segunda pessoa (ex: "tu tens", "tu viste").
+      - Use expressões como "capaz", "bah", mas sem exagerar.
+      - Tom: Mais direto e assertivo.` : ''}
+      ${input.region === 'Rio de Janeiro' ? `
+      - Use "VOCÊ". Use gírias leves como "cara", "beleza".
+      - Tom: Despojado, amigável, "carioquês" leve.
+      - Evite o "tu" conjugado errado se for soar forçado, prefira "você" para manter profissionalismo com leveza.` : ''}
+      ${input.region === 'São Paulo' ? `
+      - Use "VOCÊ".
+      - Tom: Dinâmico, acelerado, objetivo. "Meu", "Show".
+      - Foco em eficiência/business.` : ''}
+      ${input.region === 'Nordeste' ? `
+      - Use "VOCÊ" (ou "Tu" dependendo do estado, mas na dúvida "Você" é seguro).
+      - Tom: Muito acolhedor, próximo, caloroso.
+      - Evite estereótipos forçados. Foque na hospitalidade da fala.` : ''}
+      ${!input.region || input.region === 'Neutro' ? `- Português padrão do Brasil (Neutro). Use "VOCÊ".` : ''}
 
     Contexto da venda: "${input.context}" (Adapte a formalidade: LinkedIn é diferente de WhatsApp).
   `
@@ -96,7 +114,7 @@ export async function generateSalesScript(input: GenerateScriptInput) {
     const userContent: any[] = [
         {
             type: "text",
-            text: `Produto: ${input.productName}\nDescrição do Produto: ${productDesc}\nTipo de Lead: ${input.leadType}\n${isLeadResponse ? `\n--- MENSAGEM DO LEAD ---\n"${leadMessage}"\n\nGere uma resposta estratégica para esta mensagem.` : ''}`
+            text: `Produto: ${input.productName}\nDescrição do Produto: ${productDesc}\nTipo de Lead: ${input.leadType}\n${isLeadResponse ? `\n--- MENSAGEM DO LEAD ---\n"${leadMessage}"\n\nGere uma resposta estratégica para esta mensagem.` : ''}${input.refinementInstruction ? `\n\n⚠️ INSTRUÇÃO DE REFINAMENTO (Prioridade Alta): ${input.refinementInstruction}\nReescreva o script considerando esta instrução.` : ''}`
         }
     ]
 

@@ -32,7 +32,8 @@ export async function POST(request: Request) {
     } catch (e) {
         return NextResponse.json({ error: 'Invalid Request Body (Empty or Malformed)' }, { status: 400 });
     }
-    const { name, description, context, leadType, region, image, productId, productContext } = body
+    const { name, description, context, leadType, region, image, productId, productContext, refinementInstruction } = body
+
 
     // 1. Get User Info & Utils
     const { data: userData } = await supabase
@@ -98,7 +99,8 @@ export async function POST(request: Request) {
             leadType,
             region,
             imageBase64: image,
-            productContext // Pass the previous context if available
+            productContext, // Pass the previous context if available
+            refinementInstruction
         })
 
         // 4. Save to Database (User scoped is fine/better for ownership)
