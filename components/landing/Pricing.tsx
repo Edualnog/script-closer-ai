@@ -99,7 +99,7 @@ export function Pricing() {
                             <span className="text-gray-500"> / mês</span>
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
-                            Para testar rapidamente e sentir o poder da IA.
+                            Para testar a IA e validar scripts com poucos leads.
                         </p>
 
                         <Link href="/register" className="block w-full py-2.5 rounded-lg bg-[#171717] text-white text-center font-medium hover:bg-gray-800 transition-colors mb-8">
@@ -118,22 +118,6 @@ export function Pricing() {
                             <li className="flex items-start gap-3">
                                 <Check className="h-5 w-5 text-gray-900 shrink-0" />
                                 <span>Mensagem de abertura</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Roteiro básico</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Objeções limitadas</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>1 produto ativo</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Exportação simples</span>
                             </li>
                         </ul>
                     </div>
@@ -155,14 +139,12 @@ export function Pricing() {
                                 R$<AnimatedPrice value={currentProPrice} />
                             </span>
                             <span className="text-gray-500"> / mês</span>
-                            {isAnnual && (
-                                <p className="text-xs text-green-600 font-medium mt-1">
-                                    Economize R$ 20,00 por mês
-                                </p>
-                            )}
+                            <p className="text-xs text-blue-600 font-medium mt-1">
+                                {isAnnual ? "Menos de R$ 0,33 por dia" : "Menos de R$ 0,70 por dia"}
+                            </p>
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
-                            Plano ideal para quem vende todos os dias.
+                            Para quem vende todos os dias no WhatsApp/Instagram.
                         </p>
 
                         <Link href="/register" className="block w-full py-2.5 rounded-lg bg-[#007AFF] text-white text-center font-medium hover:bg-[#0062cc] transition-colors shadow-lg shadow-blue-500/30 mb-8">
@@ -189,22 +171,6 @@ export function Pricing() {
                                 <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
                                 <span>Memória dos produtos</span>
                             </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
-                                <span>Scripts com tom configurável</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
-                                <span>Modelos para WhatsApp e Instagram</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
-                                <span>30 produtos ativos</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-[#007AFF] shrink-0" />
-                                <span>Suporte prioritário</span>
-                            </li>
                         </ul>
                     </div>
 
@@ -221,14 +187,9 @@ export function Pricing() {
                                 R$<AnimatedPrice value={currentProPlusPrice} />
                             </span>
                             <span className="text-gray-500"> / mês</span>
-                            {isAnnual && (
-                                <p className="text-xs text-green-600 font-medium mt-1">
-                                    Economize R$ 40,00 por mês
-                                </p>
-                            )}
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
-                            Experiência premium para alto volume.
+                            Para infoprodutores/agências que rodam alto volume.
                         </p>
 
                         <Link href="/register" className="block w-full py-2.5 rounded-lg bg-[#171717] text-white text-center font-medium hover:bg-gray-800 transition-colors mb-8">
@@ -241,7 +202,11 @@ export function Pricing() {
                         <ul className="space-y-4 text-sm text-gray-600">
                             <li className="flex items-start gap-3">
                                 <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span className="font-medium">Mockups profissionais por IA</span>
+                                <span className="text-gray-900">Scripts Ilimitados</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
+                                <span className="text-gray-900">Mockups profissionais por IA</span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <Check className="h-5 w-5 text-gray-900 shrink-0" />
@@ -249,27 +214,7 @@ export function Pricing() {
                             </li>
                             <li className="flex items-start gap-3">
                                 <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Scripts ilimitados</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Produtos ilimitados</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Versões alternativas de scripts</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Priorização máxima na geração</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Prompt avançado para Meta Ads</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <Check className="h-5 w-5 text-gray-900 shrink-0" />
-                                <span>Biblioteca pessoal de assets</span>
+                                <span>Prompt avançado Meta Ads</span>
                             </li>
                         </ul>
                     </div>

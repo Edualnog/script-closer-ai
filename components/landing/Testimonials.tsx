@@ -1,118 +1,104 @@
-import { cn } from "@/lib/utils"
-// import { TestimonialCard, TestimonialAuthor } from "@/components/ui/testimonial-card"
-// Local import since we just created it in ui/testimonial-card
-import { TestimonialCard, TestimonialAuthor } from "@/components/ui/testimonial-card"
+import { TestimonialCard } from "@/components/ui/testimonial-card"
+
+const testimonials = [
+    {
+        text: "A IA captou exatamente o tom que eu queria. Meus clientes nem percebem que é script!",
+        author: {
+            name: "Mariana S.",
+            role: "Loja de Roupas",
+            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+    {
+        text: "Salvou meu lançamento. Gere script de quebra de objeção em segundos e fechei 3 vendas na hora.",
+        author: {
+            name: "Pedro H.",
+            role: "Infoprodutor",
+            avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+    {
+        text: "Sempre travava na hora de falar o preço. Agora tenho confiança pra negociar.",
+        author: {
+            name: "Carla M.",
+            role: "Esteticista",
+            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+    {
+        text: "Muito prático. Tiro foto do produto, a IA cria a copy e eu só mando no Zap.",
+        author: {
+            name: "João V.",
+            role: "Vendedor Autônomo",
+            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+    {
+        text: "Aumentei minha taxa de resposta em 40% usando os scripts de primeiro contato.",
+        author: {
+            name: "Luciana R.",
+            role: "Corretora",
+            avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+    {
+        text: "Melhor investimento do mês. Pago o plano Pro com uma venda que recuperei.",
+        author: {
+            name: "Rafael D.",
+            role: "SaaS Sales",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces"
+        }
+    },
+]
 
 export function Testimonials() {
-    const testimonials = [
-        {
-            author: {
-                name: 'Mariana',
-                role: 'Loja de Perfumes',
-                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces'
-            },
-            text: 'Vendi 3 perfumes no mesmo dia usando o ScriptCloser. A IA pegou detalhes das notas olfativas que eu nem tinha notado.',
-        },
-        {
-            author: {
-                name: 'Carlos',
-                role: 'Consultor de Vendas',
-                avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces'
-            },
-            text: 'Economizei 2h por dia respondendo objeções de preço no WhatsApp. É como ter um copywriter sênior do meu lado.',
-        },
-        {
-            author: {
-                name: 'Júlia',
-                role: 'Infoprodutora',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces'
-            },
-            text: 'Fiz meu primeiro R$ 1.000 em um fim de semana apenas copiando e colando os scripts de recuperação de boleto.',
-        },
-        {
-            author: {
-                name: 'Ricardo',
-                role: 'Corretor de Imóveis',
-                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces'
-            },
-            text: 'Consegui agendar 5 visitas na semana só mudando a abordagem inicial que a IA sugeriu.',
-        },
-        {
-            author: {
-                name: 'Ana',
-                role: 'Esteticista',
-                avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=faces'
-            },
-            text: 'A resposta para clientes que somem foi mágica. Recuperei 2 clientes antigas na hora.',
-        },
-    ]
-
     return (
-        <TestimonialsSection
-            title="Quem usa, vende mais."
-            description="Junte-se a centenas de vendedores e profissionais que já estão fechando mais negócios com IA."
-            testimonials={testimonials}
-        />
-    )
-}
-
-interface TestimonialsSectionProps {
-    title: string
-    description: string
-    testimonials: Array<{
-        author: TestimonialAuthor
-        text: string
-        href?: string
-    }>
-    className?: string
-}
-
-function TestimonialsSection({
-    title,
-    description,
-    testimonials,
-    className
-}: TestimonialsSectionProps) {
-    return (
-        <section className={cn(
-            "bg-background text-foreground",
-            "py-24 border-y border-gray-200 bg-[#F9FAFB]",
-            className
-        )}>
-            <div className="mx-auto flex max-w-[1400px] flex-col items-center gap-4 text-center sm:gap-16">
-                <div className="flex flex-col items-center gap-4 px-4 sm:gap-8">
-                    <h2 className="max-w-[720px] text-3xl font-bold leading-tight sm:text-5xl sm:leading-tight tracking-tight text-gray-900">
-                        {title}
-                    </h2>
-                    <p className="text-md max-w-[600px] font-medium text-gray-500 sm:text-xl">
-                        {description}
-                    </p>
-                </div>
-
-                <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-                    <div className="group flex overflow-hidden p-2 [--gap:1rem] [gap:var(--gap)] flex-row w-full [--duration:40s]">
-                        <div className="flex shrink-0 items-center [gap:var(--gap)] animate-marquee flex-row">
-                            {testimonials.map((testimonial, i) => (
-                                <TestimonialCard
-                                    key={`first-${i}`}
-                                    {...testimonial}
-                                />
-                            ))}
-                        </div>
-                        <div className="flex shrink-0 items-center [gap:var(--gap)] animate-marquee flex-row">
-                            {testimonials.map((testimonial, i) => (
-                                <TestimonialCard
-                                    key={`second-${i}`}
-                                    {...testimonial}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-1/4 bg-gradient-to-r from-[#F9FAFB] to-transparent sm:block" />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/4 bg-gradient-to-l from-[#F9FAFB] to-transparent sm:block" />
-                </div>
+        <section className="py-24 bg-white overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-4">
+                    Quem usa, vende mais.
+                </h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Junte-se a vendedores que profissionalizaram seu atendimento.
+                </p>
             </div>
+
+            <TestimonialsSection />
+
+            <p className="text-xs text-gray-400 text-center mt-12">
+                *Resultados típicos variam de acordo com o nicho e estratégia.
+            </p>
         </section>
     )
+}
+
+function TestimonialsSection() {
+    return (
+        <div
+            className="relative flex w-full flex-col items-center justify-center overflow-hidden bg-background"
+            style={{
+                // @ts-ignore
+                "--duration": "40s",
+                "--gap": "1.5rem"
+            }}
+        >
+            <div className="flex w-full flex-row gap-6 marquee-container">
+                {/* First track */}
+                <div className="flex min-w-full shrink-0 animate-marquee items-center justify-around gap-6">
+                    {testimonials.map((testimonial, idx) => (
+                        <TestimonialCard key={`t1-${idx}`} {...testimonial} />
+                    ))}
+                </div>
+                {/* Second track (duplicate for seamless loop) */}
+                <div className="flex min-w-full shrink-0 animate-marquee items-center justify-around gap-6">
+                    {testimonials.map((testimonial, idx) => (
+                        <TestimonialCard key={`t2-${idx}`} {...testimonial} />
+                    ))}
+                </div>
+            </div>
+
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white dark:from-background"></div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div>
+        </div>
+    );
 }

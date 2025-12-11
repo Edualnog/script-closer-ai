@@ -177,7 +177,7 @@ export function HeroProductForm() {
                                 onChange={(e) => setDescription(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 onFocus={() => setIsExpanded(true)}
-                                placeholder={isListening ? "Ouvindo..." : "Descreva o produto, público alvo ou cole seu texto..."}
+                                placeholder={isListening ? "Ouvindo..." : "Cole aqui sua oferta ou descreva seu produto em 2–3 frases..."}
                                 className={cn(
                                     "w-full bg-transparent text-gray-900 placeholder:text-gray-500 resize-none outline-none text-base leading-relaxed pl-1",
                                     isExpanded ? "min-h-[80px]" : "min-h-[40px]"
@@ -283,13 +283,14 @@ export function HeroProductForm() {
                                     onClick={() => handleSubmit()}
                                     disabled={!description.trim() || loading}
                                     className={cn(
-                                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm",
+                                        "h-10 px-4 rounded-full flex items-center justify-center gap-2 transition-all duration-200 shadow-sm font-medium text-sm",
                                         description.trim()
                                             ? "bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
                                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     )}
                                 >
-                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Começar grátis</span>}
+                                    {!loading && <ArrowUp className="w-4 h-4" />}
                                 </button>
                             </div>
 
@@ -298,8 +299,9 @@ export function HeroProductForm() {
                 </div>
             </div>
 
-            <p className="text-xs text-gray-400 mt-4 text-center">
-                *Teste a IA gratuitamente sem compromisso.
+            <p className="flex items-center gap-2 text-xs text-gray-500 mt-4 text-center font-medium">
+                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
+                3 scripts grátis por mês • Sem cartão de crédito
             </p>
         </div>
     )

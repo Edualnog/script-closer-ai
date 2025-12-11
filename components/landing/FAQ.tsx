@@ -2,24 +2,24 @@ import { Plus } from 'lucide-react'
 
 const faqs = [
     {
-        question: 'Como funciona a geração de scripts?',
-        answer: 'Nossa IA analisa a imagem do seu produto e o contexto que você fornece (preço, público) para criar roteiros de vendas otimizados usando as melhores técnicas de copywriting.',
+        question: 'Como a IA gera os scripts?',
+        answer: 'Nossa inteligência artificial analisa o contexto do seu produto, o público-alvo e até a entonação desejada. Diferente do ChatGPT comum, ela é treinada especificamente para conversão e fechamento de vendas.',
     },
     {
-        question: 'Posso testar sem pagar?',
-        answer: 'Sim! O plano Free oferece 3 scripts completos por mês sem necessidade de cartão de crédito.',
+        question: 'Posso usar áudio e imagens?',
+        answer: 'Sim! Você pode descrever seu produto por voz (usando nosso microfone integrado) ou enviar uma foto do produto/serviço. A IA extrai as informações automaticamente para criar o script.',
     },
     {
-        question: 'Os scripts servem para quais nichos?',
-        answer: 'Para qualquer produto físico ou serviço. De roupas e eletrônicos a consultorias e imóveis.',
+        question: 'Funciona para qual nicho?',
+        answer: 'Para qualquer um que venda pelo WhatsApp ou Direct. De lojas de roupas e eletrônicos a corretores de imóveis, dentistas e infoprodutores.',
     },
     {
-        question: 'Como funciona o cancelamento?',
-        answer: 'Você pode cancelar a qualquer momento direto pelo painel. Sem multas ou fidelidade.',
+        question: 'Funciona no celular?',
+        answer: 'Perfeitamente. O ScriptCloser é uma aplicação web (PWA) otimizada para celular. Você gera o script e copia direto para o WhatsApp em segundos.',
     },
     {
-        question: 'A IA gera imagens também?',
-        answer: 'Sim, no plano Pro+ você tem acesso ao gerador de Mockups profissionais para seus produtos.',
+        question: 'Meus dados estão seguros?',
+        answer: 'Totalmente. Não usamos seus dados de vendas para treinar modelos públicos. Suas estratégias e informações de clientes permanecem confidenciais.',
     },
 ]
 
@@ -29,14 +29,14 @@ export function FAQ() {
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
                 <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Perguntas frequentes</h2>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {faqs.map((faq, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors cursor-pointer group">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-medium text-gray-900">{faq.question}</h3>
-                                <Plus className="h-5 w-5 text-gray-400 group-hover:text-[#635BFF] transition-colors" />
-                            </div>
-                            <p className="mt-2 text-gray-500 hidden group-hover:block transition-all">
+                        <div key={index} className="border border-gray-100 bg-gray-50/50 rounded-2xl p-6 hover:border-gray-200 transition-colors">
+                            <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                <span className="text-[#635BFF]">•</span>
+                                {faq.question}
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
                                 {faq.answer}
                             </p>
                         </div>

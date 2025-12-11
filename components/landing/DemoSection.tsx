@@ -1,68 +1,68 @@
-import { MessageSquare, Wand2, ShieldCheck } from 'lucide-react'
+import { MessageSquare, Zap, RefreshCw } from 'lucide-react'
+
+const features = [
+    {
+        name: 'Script de Abertura',
+        description: 'Abordagens que geram curiosidade.',
+        content: `“Olá! Vi que você gostou do [Produto]. Muitos clientes tinham dúvida se ele servia para [Dor X], mas olha esse resultado... 👇”`,
+        icon: MessageSquare
+    },
+    {
+        name: 'Quebra de Objeção',
+        description: 'Para o "está caro" ou "vou ver com marido".',
+        content: `“Entendo! O investimento parece alto, mas se dividir por dias de uso, custa menos que um cafézinho para resolver [Problema Y].”`,
+        icon: Zap
+    },
+    {
+        name: 'Follow-up',
+        description: 'Recupere clientes sem ser chato.',
+        content: `“Oi! Só para não esquecer: liberamos uma condição especial para [Produto] que encerra hoje. Faz sentido vermos isso agora?”`,
+        icon: RefreshCw
+    },
+]
 
 export function DemoSection() {
     return (
-        <section className="py-24 bg-[#F9FAFB] border-y border-gray-200">
+        <section className="py-24 bg-gray-50/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-4">
-                        Scripts que soam humanos.<br />Respostas que quebram objeções.
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                        Scripts que soam humanos (e vendem)
                     </h2>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Esqueça respostas robóticas. Nossa IA aprendeu com os melhores vendedores do Brasil.
+                    </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Card 1 */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/60">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
-                                <Wand2 className="h-4 w-4" />
-                            </div>
-                            <span className="font-semibold text-gray-900">Script de Abertura</span>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="h-2 bg-gray-100 rounded w-3/4"></div>
-                            <div className="h-2 bg-gray-100 rounded w-full"></div>
-                            <div className="h-2 bg-gray-100 rounded w-5/6"></div>
-                            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600 italic">
-                                "Olá! Notei que você se interessou pelo [Produto]. Posso te mostrar como ele resolve [Problema]?"
-                            </div>
-                        </div>
-                    </div>
+                    {features.map((feature, index) => (
+                        <div key={index} className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            {/* Decorative background blur */}
+                            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gray-50 rounded-full group-hover:bg-gray-100 transition-colors duration-500" />
 
-                    {/* Card 2 */}
-                    <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 transform md:-translate-y-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
-                                <ShieldCheck className="h-4 w-4" />
-                            </div>
-                            <span className="font-semibold text-gray-900">Quebra de Objeção</span>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded">Cliente: "Tá caro"</span>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
-                                "Entendo perfeitamente. Mas se você dividir pelo tempo que vai economizar, o custo é menor que um café por dia. Vale o investimento, não?"
-                            </div>
-                        </div>
-                    </div>
+                            <div className="relative">
+                                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-6 text-gray-900 group-hover:text-[#635BFF] group-hover:bg-[#635BFF]/10 transition-colors">
+                                    <feature.icon className="h-6 w-6" />
+                                </div>
 
-                    {/* Card 3 */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/60">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
-                                <MessageSquare className="h-4 w-4" />
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.name}</h3>
+                                <p className="text-gray-500 mb-6 text-sm">{feature.description}</p>
+
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 font-mono text-sm text-gray-600 leading-relaxed relative">
+                                    <div className="absolute top-3 right-3 flex gap-1">
+                                        <div className="w-2 h-2 rounded-full bg-gray-200"></div>
+                                        <div className="w-2 h-2 rounded-full bg-gray-200"></div>
+                                    </div>
+                                    {feature.content}
+                                </div>
                             </div>
-                            <span className="font-semibold text-gray-900">Follow-up</span>
                         </div>
-                        <div className="space-y-3">
-                            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                                "Oi! Ainda com alguma dúvida sobre o [Produto]? Separei essa condição especial pra fecharmos hoje."
-                            </div>
-                            <div className="h-2 bg-gray-100 rounded w-1/2 ml-auto"></div>
-                        </div>
-                    </div>
+                    ))}
                 </div>
+
+                <p className="text-xs text-gray-400 text-center mt-12 italic">
+                    *Exemplos fictícios apenas para demonstrar o estilo da IA.
+                </p>
             </div>
         </section>
     )
