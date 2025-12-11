@@ -4,6 +4,10 @@ export const PLANS = {
     free: {
         name: 'Free',
         price: 0,
+        stripeIds: {
+            monthly: null,
+            annual: null,
+        },
         limits: {
             scripts: 3,
             mockups: 0,
@@ -19,6 +23,10 @@ export const PLANS = {
     pro: {
         name: 'Pro',
         price: 1990, // in cents
+        stripeIds: {
+            monthly: 'price_1SczF1GUezyhsX2w30KyuFL5',
+            annual: 'price_1SczF1GUezyhsX2wrpjTsyG7',
+        },
         limits: {
             scripts: 20,
             mockups: 0,
@@ -34,6 +42,10 @@ export const PLANS = {
     pro_plus: {
         name: 'Pro+',
         price: 5990, // in cents
+        stripeIds: {
+            monthly: 'price_1SczF1GUezyhsX2w2ij4NUPd',
+            annual: 'price_1SczF1GUezyhsX2wenYxn8No',
+        },
         limits: {
             scripts: 20,
             mockups: 10,

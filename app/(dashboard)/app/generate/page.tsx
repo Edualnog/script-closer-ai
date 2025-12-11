@@ -7,6 +7,7 @@ import Link from 'next/link'
 
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { CopyButton } from '@/components/ui/CopyButton'
+import { TextShimmerWave } from '@/components/ui/TextShimmerWave'
 
 export default function GeneratePage() {
     const router = useRouter()
@@ -99,18 +100,18 @@ export default function GeneratePage() {
         }
     };
 
+
+
+    // ... existing imports
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-                    <div className="relative bg-white p-4 rounded-full shadow-lg">
-                        <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
-                    </div>
-                </div>
-                <h2 className="mt-8 text-2xl font-semibold text-gray-900">Gerando seu script...</h2>
+                <TextShimmerWave className='text-3xl font-semibold mb-2'>
+                    Gerando script...
+                </TextShimmerWave>
                 <p className="mt-2 text-gray-500 max-w-md">
-                    Nossa IA está analisando seu produto e criando a melhor estratégia de vendas.
+                    Isso pode levar alguns segundos enquanto nossa IA cria a melhor estratégia.
                 </p>
             </div>
         );

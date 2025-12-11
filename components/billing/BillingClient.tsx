@@ -84,7 +84,35 @@ export function BillingClient({ user }: BillingClientProps) {
         }
     };
 
-    const handleUpgrade = (plan: string) => alert(`Upgrade para ${plan} (${billingInterval}) em breve!`);
+    // Checkout State
+    const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+    const handleUpgrade = async (plan: string) => {
+        setLoadingPlan(plan);
+        try {
+            const res = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan,
+                    interval: billingInterval === 'annually' ? 'annual' : 'monthly'
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Falha ao criar sessão de checkout");
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("URL de checkout inválida");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao iniciar checkout. Tente a novamente.");
+            setLoadingPlan(null);
+        }
+    };
 
     return (
         <div className="max-w-6xl mx-auto pb-20 pt-8 px-4 space-y-12">
@@ -183,8 +211,12 @@ export function BillingClient({ user }: BillingClientProps) {
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">Plano ideal para quem vende todos os dias.</p>
 
-                        <button onClick={() => handleUpgrade('pro')} disabled={currentPlan === 'pro'} className="block w-full py-2.5 rounded-lg bg-[#007AFF] text-white text-center font-medium hover:bg-[#0062cc] transition-colors shadow-lg shadow-blue-500/30 mb-8 disabled:opacity-50">
-                            {currentPlan === 'pro' ? "Plano Atual" : "Escolher Pro"}
+                        <button
+                            onClick={() => handleUpgrade('pro')}
+                            disabled={currentPlan === 'pro' || loadingPlan === 'pro'}
+                            className="block w-full py-2.5 rounded-lg bg-[#007AFF] text-white text-center font-medium hover:bg-[#0062cc] transition-colors shadow-lg shadow-blue-500/30 mb-8 disabled:opacity-50 flex items-center justify-center"
+                        >
+                            {loadingPlan === 'pro' ? <Loader2 className="w-5 h-5 animate-spin" /> : (currentPlan === 'pro' ? "Plano Atual" : "Escolher Pro")}
                         </button>
 
                         <div className="text-xs font-semibold text-[#007AFF] mb-4 uppercase tracking-wider">Tudo do Free +</div>
@@ -206,8 +238,12 @@ export function BillingClient({ user }: BillingClientProps) {
                         </div>
                         <p className="text-sm text-gray-500 mb-6 min-h-[40px]">Experiência premium para alto volume.</p>
 
-                        <button onClick={() => handleUpgrade('pro_plus')} disabled={currentPlan === 'pro_plus'} className="block w-full py-2.5 rounded-lg bg-[#171717] text-white text-center font-medium hover:bg-gray-800 transition-colors mb-8 disabled:opacity-50">
-                            {currentPlan === 'pro_plus' ? "Plano Atual" : "Escolher Pro+"}
+                        <button
+                            onClick={() => handleUpgrade('pro_plus')}
+                            disabled={currentPlan === 'pro_plus' || loadingPlan === 'pro_plus'}
+                            className="block w-full py-2.5 rounded-lg bg-[#171717] text-white text-center font-medium hover:bg-gray-800 transition-colors mb-8 disabled:opacity-50 flex items-center justify-center"
+                        >
+                            {loadingPlan === 'pro_plus' ? <Loader2 className="w-5 h-5 animate-spin" /> : (currentPlan === 'pro_plus' ? "Plano Atual" : "Escolher Pro+")}
                         </button>
 
                         <div className="text-xs font-semibold text-gray-900 mb-4 uppercase tracking-wider">Tudo do Pro +</div>
