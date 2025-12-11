@@ -91,9 +91,9 @@ export async function generateSalesScript(input: GenerateScriptInput) {
     Regionalização (CRÍTICO PARA NATURALIDADE):
     - O lead é de: ${input.region || 'Brasil (Geral)'}. Adapte o vocabulário e pronomes:
       ${input.region === 'Sul' ? `
-      - Use "TU" e conjugue os verbos na segunda pessoa (ex: "tu tens", "tu viste").
-      - Use expressões como "capaz", "bah", mas sem exagerar.
-      - Tom: Mais direto e assertivo.` : ''}
+      - Use "TU", mas de forma COLOQUIAL (conjugue o verbo na 3ª pessoa, como se fala na rua: "tu pode", "tu quer"). NÃO use conjugação culta arcaica ("tu podes").
+      - Use expressões como "bah", "tche", "buenas", "jóia", "tri".
+      - Tom: Direto, mas camarada.` : ''}
       ${input.region === 'Rio de Janeiro' ? `
       - Use "VOCÊ". Use gírias leves como "cara", "beleza".
       - Tom: Despojado, amigável, "carioquês" leve.

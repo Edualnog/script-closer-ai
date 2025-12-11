@@ -214,11 +214,12 @@ export default function GeneratePage() {
                     </div>
                 </div>
 
-                {/* Roteiro */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6 transition-shadow hover:shadow-md">
-                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                {/* Roteiro (WhatsApp Style) */}
+                <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden transition-shadow hover:shadow-md">
+                    <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-white z-10 relative">
                         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            💬 Roteiro de Conversa
+                            <MessageSquare className="w-5 h-5 text-green-500" />
+                            Roteiro de Conversa (Preview)
                         </h3>
                         <div className="flex items-center gap-2">
                             <WhatsAppButton text={result.roteiro_conversa || ''} />
@@ -228,8 +229,43 @@ export default function GeneratePage() {
                             />
                         </div>
                     </div>
-                    <div className="prose prose-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                        <RichTextRenderer content={result.roteiro_conversa} />
+
+                    {/* WhatsApp Container */}
+                    <div className="bg-[#efeae2] p-6 lg:p-8 min-h-[300px] relative">
+                        {/* Doodle Pattern Overlay (Optional - simplified with CSS pattern) */}
+                        <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")' }}></div>
+
+                        <div className="relative z-10 space-y-3 max-w-2xl mx-auto">
+                            {(result.roteiro_conversa || '').split('\n').filter((line: string) => line.trim().length > 0).map((line: string, i: number) => {
+                                // Simple distinct logic: If line starts with a number, treating as a major step (Bubble)
+                                // We strip the number "1." for cleaner bubble look if desired, or keep it.
+                                const isStep = /^\d+\./.test(line);
+                                const cleanText = line.replace(/^\d+\.\s*/, '');
+
+                                if (!isStep && line.length < 5) return null; // Skip tiny noise
+
+                                return (
+                                    <div key={i} className="flex justify-end">
+                                        <div className="bg-[#dcf8c6] text-gray-800 rounded-lg rounded-tr-none px-4 py-2 shadow-sm max-w-[85%] relative">
+                                            {isStep && (
+                                                <span className="block text-[10px] font-bold text-green-700 uppercase mb-1 tracking-wide">
+                                                    Passo {line.split('.')[0]}
+                                                </span>
+                                            )}
+                                            <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                                                <RichTextRenderer content={isStep ? cleanText : line} />
+                                            </div>
+                                            <div className="flex justify-end items-center gap-1 mt-1 opacity-70">
+                                                <span className="text-[10px] text-gray-500">
+                                                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                <CheckCircle2 className="w-3 h-3 text-blue-500" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
 

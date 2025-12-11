@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/dashboard/Sidebar'
 import { MobileNav } from '@/components/dashboard/MobileNav'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { OnboardingWizard } from '@/components/dashboard/OnboardingWizard'
 
 export default async function DashboardLayout({
     children,
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
                     </div>
                 </div>
             </main>
+            <OnboardingWizard />
         </div>
     )
 }
