@@ -35,6 +35,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
     const [context, setContext] = useState("WhatsApp");
     const [region, setRegion] = useState("Neutro");
     const [leadType, setLeadType] = useState("morno");
+    const [leadOrigin, setLeadOrigin] = useState<'inbound' | 'outbound'>('inbound');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -138,6 +139,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
 
             context: context,
             leadType: leadType,
+            leadOrigin: leadOrigin,
             region: region,
             imageUrl: imagePreview,
             imageFile: null,
@@ -183,7 +185,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
                 ref={containerRef}
                 className={cn(
                     "w-full bg-gray-100 border border-gray-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-300 ease-out",
-                    isExpanded && activeMode === 'script' ? "max-w-3xl" : "max-w-2xl"
+                    isExpanded && activeMode === 'script' ? "max-w-6xl" : "max-w-4xl"
                 )}
             >
                 <div className="p-4">
@@ -295,6 +297,38 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
 
                                 {/* Selectors */}
                                 <div className="flex gap-2 shrink-0">
+                                    {/* Lead Origin Selector (New) */}
+                                    {activeMode === 'script' && (
+                                        <div className="flex bg-gray-200/50 rounded-full p-0.5 shrink-0 items-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setLeadOrigin('inbound')}
+                                                className={cn(
+                                                    "text-[10px] px-2 py-1 rounded-full transition-all font-medium whitespace-nowrap",
+                                                    leadOrigin === 'inbound'
+                                                        ? "bg-white text-green-700 shadow-sm"
+                                                        : "text-gray-500 hover:text-gray-700"
+                                                )}
+                                                title="O cliente entrou em contato comigo"
+                                            >
+                                                Lead chamou
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setLeadOrigin('outbound')}
+                                                className={cn(
+                                                    "text-[10px] px-2 py-1 rounded-full transition-all font-medium whitespace-nowrap",
+                                                    leadOrigin === 'outbound'
+                                                        ? "bg-white text-blue-700 shadow-sm"
+                                                        : "text-gray-500 hover:text-gray-700"
+                                                )}
+                                                title="Eu vou entrar em contato com o cliente"
+                                            >
+                                                Vou abordar
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <select
                                         className="appearance-none bg-gray-200/50 hover:bg-gray-200 transition-colors text-gray-600 text-[11px] rounded-full py-1.5 px-3 font-medium cursor-pointer outline-none border-none"
                                         value={context}

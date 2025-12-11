@@ -56,6 +56,7 @@ export default function GeneratePage() {
                 description: data.description,
                 context: data.context || 'WhatsApp',
                 leadType: data.leadType || 'morno',
+                leadOrigin: data.leadOrigin || 'inbound', // New field
                 region: data.region || 'Neutro',
                 image: data.imageUrl || null,
                 // Pass the context if available (for lead_response mode)

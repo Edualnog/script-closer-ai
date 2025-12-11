@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     } catch (e) {
         return NextResponse.json({ error: 'Invalid Request Body (Empty or Malformed)' }, { status: 400 });
     }
-    const { name, description, context, leadType, region, image, productId, productContext, refinementInstruction } = body
+    const { name, description, context, leadType, leadOrigin, region, image, productId, productContext, refinementInstruction } = body
 
 
     // 1. Get User Info & Utils
@@ -97,6 +97,7 @@ export async function POST(request: Request) {
             description,
             context,
             leadType,
+            leadOrigin: leadOrigin || 'inbound', // Default to inbound if missing
             region,
             imageBase64: image,
             productContext, // Pass the previous context if available
