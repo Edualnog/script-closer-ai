@@ -14,7 +14,7 @@ export function DemoSection() {
                     {/* Card 1 */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/60">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
                                 <Wand2 className="h-4 w-4" />
                             </div>
                             <span className="font-semibold text-gray-900">Script de Abertura</span>
@@ -32,16 +32,16 @@ export function DemoSection() {
                     {/* Card 2 */}
                     <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 transform md:-translate-y-4">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
                                 <ShieldCheck className="h-4 w-4" />
                             </div>
                             <span className="font-semibold text-gray-900">Quebra de Objeção</span>
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-1 rounded">Cliente: "Tá caro"</span>
+                                <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded">Cliente: "Tá caro"</span>
                             </div>
-                            <div className="p-3 bg-purple-50 rounded-lg text-sm text-gray-700">
+                            <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
                                 "Entendo perfeitamente. Mas se você dividir pelo tempo que vai economizar, o custo é menor que um café por dia. Vale o investimento, não?"
                             </div>
                         </div>
@@ -50,7 +50,7 @@ export function DemoSection() {
                     {/* Card 3 */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/60">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-900">
                                 <MessageSquare className="h-4 w-4" />
                             </div>
                             <span className="font-semibold text-gray-900">Follow-up</span>
