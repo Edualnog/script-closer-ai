@@ -30,10 +30,8 @@ export async function POST(request: Request) {
             ).join('\n')
             : '';
 
-        // Regional pronoun preference (subtle, not forced)
-        const regionalNote = region === 'Sul'
-            ? 'Use "tu" ao invés de "você" de forma natural (ex: "tu viu?", "tu consegue", "quer que eu te mande?").'
-            : 'Use "você" normalmente.';
+        // Check if Sul region - use TU
+        const useTu = region === 'Sul';
 
         const systemPrompt = `
 Você é um vendedor amigo conversando pelo WhatsApp. Responda de forma NATURAL e COLOQUIAL.
@@ -46,37 +44,41 @@ ${historyText}
 
 LEAD DISSE AGORA: "${leadMessage}"
 
-ESTILO REGIONAL:
-${regionalNote}
+${useTu ? `
+🔴 REGIÃO SUL - OBRIGATÓRIO USAR "TU":
+- SEMPRE use "tu" ao invés de "você"
+- Conjugue na 3ª pessoa: "tu viu", "tu consegue", "tu quer"
+- Exemplos: "te ajuda", "teu negócio", "pro teu dia a dia"
+- NUNCA escreva "você" - use APENAS "tu"
+` : `
+Use "você" normalmente.
+`}
 
-REGRAS ESSENCIAIS:
-1. RESPONDA AO QUE O LEAD DISSE, não ignore a pergunta dele
-2. Se ele perguntou algo específico, responda isso primeiro
-3. Tom COLOQUIAL e AMIGÁVEL, como se fosse um amigo explicando
-4. MÁXIMO 2-3 linhas curtas (WhatsApp é mobile!)
-5. Termine com pergunta simples para continuar a conversa
-6. NO MÁXIMO 1 emoji, se precisar
-7. Seja direto, sem enrolação
+REGRAS CRÍTICAS:
+1. RESPONDA AO QUE O LEAD DISSE diretamente
+2. Tom COLOQUIAL, como um amigo explicando
+3. MÁXIMO 2 linhas curtas
+4. 🚫 PROIBIDO EMOJI - não use nenhum emoji
+5. Termine com pergunta simples
+6. Seja direto
 
-EXEMPLOS DE TOM CORRETO:
-- Lead: "quanto custa?" → "Olha, o investimento é X por mês. ${region === 'Sul' ? 'Cabe no teu' : 'Cabe no seu'} bolso?"
-- Lead: "o que faz?" → "Basicamente te ajuda a [benefício]. ${region === 'Sul' ? 'Quer que eu te mostre' : 'Quer ver'} como funciona?"
-- Lead: "diz" → "É assim: [explicação curta]. Fez sentido?"
-
-Responda APENAS com a mensagem pronta, sem aspas.
+Responda APENAS com a mensagem pronta. Sem aspas, sem emoji.
 `;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Lead disse: "${leadMessage}". Gere resposta natural.` }
+                { role: "user", content: `Lead disse: "${leadMessage}". Responda ${useTu ? 'usando TU (nunca você)' : 'normalmente'}, SEM emoji.` }
             ],
-            temperature: 0.8,
-            max_tokens: 150
+            temperature: 0.7,
+            max_tokens: 100
         })
 
-        const responseText = response.choices[0].message.content?.trim() || ''
+        let responseText = response.choices[0].message.content?.trim() || ''
+
+        // Force remove any emojis that slipped through
+        responseText = responseText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
 
         return NextResponse.json({ response: responseText })
 
