@@ -113,24 +113,47 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
     ).length;
     const showWarning = negativeCount >= 2;
 
-    const handleLeadResponded = () => {
+    const handleLeadResponded = async () => {
         if (!leadResponse.trim()) return;
 
         // 1. Add lead's message
         const newHistory = [...conversationHistory, { type: 'lead' as const, content: leadResponse }];
         setConversationHistory(newHistory);
+        const savedLeadMessage = leadResponse;
         setLeadResponse('');
         setIsGeneratingLocal(true);
-
-        // 2. Simulate brief loading then add next step from roteiro
-        setTimeout(() => {
-            const stepIndex = Math.floor(newHistory.length / 2);
-            const nextStep = roteiroSteps[stepIndex] || roteiroSteps[roteiroSteps.length - 1] || 'Continue a conversa normalmente.';
-            setConversationHistory([...newHistory, { type: 'you', content: nextStep }]);
-            setIsGeneratingLocal(false);
-        }, 800);
-
         setShowFollowUp(false);
+
+        try {
+            // 2. Call AI API for contextual response
+            const response = await fetch('/api/generate-response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: result.nome_projeto || 'Produto',
+                    productDescription: result.mensagem_abertura,
+                    leadMessage: savedLeadMessage,
+                    conversationHistory: newHistory
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setConversationHistory([...newHistory, { type: 'you', content: data.response }]);
+            } else {
+                // Fallback to roteiro step if API fails
+                const stepIndex = Math.floor(newHistory.length / 2);
+                const fallback = roteiroSteps[stepIndex] || 'Posso te ajudar com mais alguma informação?';
+                setConversationHistory([...newHistory, { type: 'you', content: fallback }]);
+            }
+        } catch (error) {
+            console.error('Error generating response:', error);
+            const stepIndex = Math.floor(newHistory.length / 2);
+            const fallback = roteiroSteps[stepIndex] || 'Posso te ajudar com mais alguma informação?';
+            setConversationHistory([...newHistory, { type: 'you', content: fallback }]);
+        }
+
+        setIsGeneratingLocal(false);
     };
 
     const flowItems = buildFlowItems();

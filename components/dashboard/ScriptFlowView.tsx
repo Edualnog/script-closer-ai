@@ -86,20 +86,42 @@ export function ScriptFlowView({ script, productName, productId }: ScriptFlowVie
     const handleLeadResponded = async () => {
         if (!leadResponse.trim()) return;
 
-        setConversationHistory([...conversationHistory, { type: 'lead', content: leadResponse }]);
-        setIsGenerating(true);
-
-        // Simulate AI response (in real app, this would call the API)
-        const stepIndex = Math.floor(conversationHistory.length / 2);
-        const nextStep = roteiroSteps[stepIndex + 1] || roteiroSteps[stepIndex] || 'Continue a conversa de forma persuasiva.';
-
-        setTimeout(() => {
-            setConversationHistory(prev => [...prev, { type: 'you', content: nextStep }]);
-            setIsGenerating(false);
-        }, 1000);
-
+        const newHistory = [...conversationHistory, { type: 'lead' as const, content: leadResponse }];
+        setConversationHistory(newHistory);
         setLeadResponse('');
+        setIsGenerating(true);
         setShowFollowUp(false);
+
+        try {
+            // Call AI API for contextual response
+            const response = await fetch('/api/generate-response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: productName,
+                    productDescription: script.mensagem_abertura,
+                    leadMessage: leadResponse,
+                    conversationHistory: newHistory
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setConversationHistory([...newHistory, { type: 'you', content: data.response }]);
+            } else {
+                // Fallback to roteiro step if API fails
+                const stepIndex = Math.floor(newHistory.length / 2);
+                const fallback = roteiroSteps[stepIndex] || 'Posso te ajudar com mais alguma informação?';
+                setConversationHistory([...newHistory, { type: 'you', content: fallback }]);
+            }
+        } catch (error) {
+            console.error('Error generating response:', error);
+            const stepIndex = Math.floor(newHistory.length / 2);
+            const fallback = roteiroSteps[stepIndex] || 'Posso te ajudar com mais alguma informação?';
+            setConversationHistory([...newHistory, { type: 'you', content: fallback }]);
+        }
+
+        setIsGenerating(false);
     };
 
     const flowItems = buildFlowItems();
