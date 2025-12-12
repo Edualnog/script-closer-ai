@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, XCircle, Send, Plus, Clock, Loader2, Copy, Check, ArrowDown, AlertTriangle } from 'lucide-react'
+import { MessageSquare, CheckCircle, XCircle, Send, Plus, Clock, Loader2, Copy, Check, ArrowDown, AlertTriangle, Sparkles } from 'lucide-react'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
+import { TextShimmerWave } from '@/components/ui/TextShimmerWave'
 
 interface ConversationItem {
     type: 'you' | 'lead';
@@ -184,10 +185,14 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                         <div className={`flex ${item.position === 'left' ? 'justify-start' : 'justify-end'}`}>
                             <div className="w-[75%] md:w-[60%]">
                                 {item.type === 'loading' ? (
-                                    // INLINE Loading - only in this box
-                                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-5 text-center">
-                                        <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
-                                        <p className="text-sm text-gray-400">Gerando resposta...</p>
+                                    // INLINE Loading - animated shimmer
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-3 animate-pulse">
+                                            <Sparkles className="w-5 h-5 text-white" />
+                                        </div>
+                                        <TextShimmerWave className="text-base font-medium text-gray-700">
+                                            Gerando resposta...
+                                        </TextShimmerWave>
                                     </div>
                                 ) : item.type === 'you' ? (
                                     <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
