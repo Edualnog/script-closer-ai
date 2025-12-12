@@ -136,6 +136,7 @@ export async function POST(request: Request) {
                 product_id: finalProductId,
                 tipo_lead: leadType,
                 canal_venda: context,
+                regiao: region || 'Neutro',
                 mensagem_abertura: aiResult.mensagem_abertura,
                 roteiro_conversa: aiResult.roteiro_conversa,
                 respostas_objecoes: aiResult.respostas_objecoes,
