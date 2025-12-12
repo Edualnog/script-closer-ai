@@ -51,20 +51,22 @@ ${historyText || '(início)'}
 
 LEAD DISSE: "${leadMessage}"
 
-${useTu ? 'USE "TU" (região Sul): tu, teu, te.' : ''}
+${useTu ? `
+🔴 OBRIGATÓRIO - REGIÃO SUL:
+- SEMPRE use "tu", "ti", "te", "teu", "tua"
+- NUNCA use "você", "seu", "sua"
+- Exemplos: "pra ti", "te mostro", "teu negócio", "melhor pra ti"
+- Se for perguntar algo: "O que tu acha?" não "O que você acha?"
+` : ''}
 
 REGRAS DE OURO:
-1. ${isAccepting ? '🟢 LEAD ACEITOU! MANDE O LINK ou diga "Te mandei aqui [link]" - NÃO pergunte de novo!' : ''}
-2. ${isObjection ? '🟡 OBJEÇÃO! Valide primeiro ("entendo") depois mostre diferencial rápido.' : ''}
-3. ${turnCount >= 3 ? '⚠️ Já são ' + turnCount + ' mensagens. É hora de FECHAR: mande link, marque demo, dê preço.' : ''}
-4. NUNCA termine com "Quer que eu te mande X?" se você já ofereceu isso antes
-5. Se já perguntou, agora MANDA: "Olha, te mandei o link: [link da demo]"
-6. MÁXIMO 2 linhas
-7. SEM EMOJI
-8. Seja assertivo: "Te passo o acesso", "O link é esse:", "Vou te mandar agora"
-
-Se o lead aceitou algo, NÃO pergunte novamente. FAÇA.
-Ex: Lead disse "pode mandar" → Você: "Pronto, te mandei: [link]. Dá uma olhada e me conta."
+1. ${isAccepting ? '🟢 LEAD ACEITOU! MANDE O LINK agora - NÃO pergunte de novo!' : ''}
+2. ${isObjection ? '🟡 OBJEÇÃO! Valide ("entendo") depois mostre diferencial.' : ''}
+3. ${turnCount >= 3 ? '⚠️ ' + turnCount + ' msgs - FECHE: mande link, marque horário.' : ''}
+4. NUNCA repita pergunta que já fez
+5. MÁXIMO 2 linhas
+6. SEM EMOJI
+7. Seja assertivo: "Te passo agora", "O link é esse"
 
 Responda só o texto, sem aspas.
 `;
@@ -83,6 +85,17 @@ Responda só o texto, sem aspas.
 
         // Remove emojis
         responseText = responseText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
+
+        // Force tu for Sul region (post-processing fix)
+        if (useTu) {
+            responseText = responseText
+                .replace(/\bvocê\b/gi, 'tu')
+                .replace(/\bpara você\b/gi, 'pra ti')
+                .replace(/\bpra você\b/gi, 'pra ti')
+                .replace(/\bcom você\b/gi, 'contigo')
+                .replace(/\bseu\b/gi, 'teu')
+                .replace(/\bsua\b/gi, 'tua')
+        }
 
         return NextResponse.json({ response: responseText })
 
