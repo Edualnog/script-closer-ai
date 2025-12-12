@@ -293,27 +293,42 @@ export default function GeneratePage() {
                     <div className="space-y-4">
                         {result.respostas_objecoes && Object.entries(result.respostas_objecoes).map(([key, value], index) => {
                             const content = value as string
+                            const isLocked = userPlan === 'free' && index >= 3;
 
                             return (
-                                <div key={key} className="bg-gray-50 rounded-lg p-4 relative group">
+                                <div key={key} className={`bg-gray-50 rounded-lg p-4 relative group ${isLocked ? 'overflow-hidden' : ''}`}>
                                     <div className="flex justify-between items-start mb-2">
                                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                                             {key.replace(/_/g, ' ')}
                                         </h4>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <WhatsAppButton text={content} />
-                                            <CopyButton
-                                                text={content}
-                                                className="text-gray-400 hover:text-indigo-600"
-                                            />
+                                        {!isLocked && (
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <WhatsAppButton text={content} />
+                                                <CopyButton
+                                                    text={content}
+                                                    className="text-gray-400 hover:text-indigo-600"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={`text-sm text-gray-800 leading-relaxed ${isLocked ? 'filter blur-[6px] select-none opacity-50' : ''}`}>
+                                        <RichTextRenderer content={isLocked ? "Conteúdo exclusivo para assinantes. Faça o upgrade para desbloquear todas as objeções e fechar mais vendas." : content} />
+                                    </div>
+
+                                    {isLocked && (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/10 z-10 cursor-pointer hover:bg-gray-50/20 transition-colors">
+                                            <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm mb-2">
+                                                <Zap className="w-5 h-5 text-yellow-500 fill-current" />
+                                            </div>
+                                            <span className="text-xs font-semibold text-gray-900 bg-white/80 px-3 py-1 rounded-full shadow-sm">
+                                                Exclusivo Pro
+                                            </span>
                                         </div>
-                                    </div>
-                                    {/* FIXED: Changed p to div to allow nested divs from RichTextRenderer */}
-                                    <div className="text-sm text-gray-800 leading-relaxed">
-                                        <RichTextRenderer content={content} />
-                                    </div>
+                                    )}
                                 </div>
                             )
+
                         })}
                     </div>
                 </div>

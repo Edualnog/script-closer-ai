@@ -129,10 +129,13 @@ export async function generateSalesScript(input: GenerateScriptInput) {
   "mensagem_abertura": "Se Inbound: Resposta acolhedora ao 'Oi' do lead. Se Outbound: Quebra-gelo para iniciar a conversa.",
     "roteiro_conversa": "O script principal passo a passo (Passo 1, Passo 2...), focado na conversão.",
       "respostas_objecoes": {
-    "preco_alto": "Argumento para 'tá caro'",
-      "vou_pensar": "Argumento para 'vou ver com esposa/sócio'",
-        "confianca": "Argumento para 'será que funciona?'"
-  },
+        "preco_alto": "Argumento para 'tá caro'",
+        "vou_pensar": "Argumento para 'vou ver com esposa/sócio'",
+        "confianca": "Argumento para 'será que funciona?'",
+        "concorrente": "Argumento para 'uso o do fulano'",
+        "agora_nao": "Argumento para 'vê mais pra frente'",
+        "decisor": "Argumento para 'preciso falar com o diretor'"
+      },
   "follow_up": ["Opção 1 de mensagem para retomar contato amanhã", "Opção 2 para 3 dias depois"]
 }
 `
