@@ -30,8 +30,11 @@ export async function POST(request: Request) {
             ).join('\n')
             : '';
 
-        // Check if Sul region - use TU
-        const useTu = region === 'Sul';
+        // Check if Sul region - use TU (case insensitive check)
+        const regionLower = (region || '').toLowerCase().trim();
+        const useTu = regionLower === 'sul' || regionLower.includes('sul');
+
+        console.log('Generate Response - Region:', region, '| useTu:', useTu);
 
         const systemPrompt = `
 Você é um vendedor amigo conversando pelo WhatsApp. Responda de forma NATURAL e COLOQUIAL.
