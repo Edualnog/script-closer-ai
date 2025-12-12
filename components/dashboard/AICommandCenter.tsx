@@ -229,8 +229,11 @@ export function AICommandCenter({ initialChannel, initialProduct }: AICommandCen
     return (
         <div className="flex flex-col w-full">
 
-            {/* Prompt Section */}
-            <div className="min-h-[80vh] flex flex-col items-center justify-center w-full relative px-4 py-8">
+            {/* Prompt Section - Only take full height when no result */}
+            <div className={cn(
+                "flex flex-col items-center justify-center w-full relative px-4 py-8",
+                !result && "min-h-[80vh]"
+            )}>
 
                 {/* Loading State - Replaces the entire input section */}
                 {loading ? (
