@@ -1,15 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check } from 'lucide-react'
+import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check, ArrowRight, ArrowLeft, ArrowDown } from 'lucide-react'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
 
-interface Message {
-    type: 'you' | 'lead' | 'system';
+interface ConversationItem {
+    type: 'you' | 'lead';
     content: string;
-    timestamp: Date;
 }
 
 interface ScriptResultDisplayProps {
@@ -21,11 +20,11 @@ interface ScriptResultDisplayProps {
 
 export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }: ScriptResultDisplayProps) {
     const router = useRouter();
-    const [conversation, setConversation] = useState<Message[]>([]);
-    const [currentStep, setCurrentStep] = useState(0);
+    const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>([]);
     const [leadResponse, setLeadResponse] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [showFollowUp, setShowFollowUp] = useState(false);
+    const [pendingResponse, setPendingResponse] = useState<string | null>(null);
 
     if (!result) return null;
 
@@ -33,39 +32,54 @@ export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }:
         const rawText = String(text || '');
         const stepPattern = /(?:Passo\s*\d+[:\.]?\s*|^\d+[:\.\)]\s*)/gi;
         const parts = rawText.split(stepPattern).filter(part => part.trim().length > 0);
-        if (parts.length > 1) {
-            return parts.map((part, index) => ({ stepNumber: index + 1, content: part.trim() }));
-        }
-        return rawText.split('\n').filter(line => line.trim().length > 0).map((line, i) => ({
-            stepNumber: i + 1,
-            content: line.replace(/^(\d+[\.\):]?\s*|Passo\s*\d+[:\.]?\s*)/i, '').trim()
-        })).filter(item => item.content.length > 3);
+        if (parts.length > 1) return parts.map(part => part.trim());
+        return rawText.split('\n').filter(line => line.trim().length > 3).map(line =>
+            line.replace(/^(\d+[\.\):]?\s*|Passo\s*\d+[:\.]?\s*)/i, '').trim()
+        );
     };
 
     const roteiroSteps = parseRoteiro(result.roteiro_conversa);
     const followUps = Array.isArray(result.follow_up) ? result.follow_up : [];
 
-    const getCurrentMessage = () => {
-        if (currentStep === 0) return result.mensagem_abertura;
-        if (currentStep <= roteiroSteps.length) return roteiroSteps[currentStep - 1]?.content || '';
-        return null;
-    };
+    // Build all items to display
+    const allItems: { type: 'you' | 'lead' | 'loading'; content: string; position: 'left' | 'right' }[] = [];
+
+    // First: Opening message (SIM box)
+    allItems.push({ type: 'you', content: result.mensagem_abertura, position: 'left' });
+
+    // Then: alternate between lead responses and your responses from history
+    conversationHistory.forEach((item, i) => {
+        allItems.push({
+            type: item.type,
+            content: item.content,
+            position: item.type === 'lead' ? 'right' : 'left'
+        });
+    });
+
+    // Add loading state if generating
+    if (isGenerating) {
+        allItems.push({ type: 'loading', content: '', position: 'left' });
+    }
 
     const handleLeadResponded = async () => {
         if (!leadResponse.trim() || !handleRefine) return;
-        setIsGenerating(true);
 
-        const newConvo = [...conversation, { type: 'lead' as const, content: leadResponse, timestamp: new Date() }];
-        setConversation(newConvo);
+        // Add lead's response to history
+        const newHistory = [...conversationHistory, { type: 'lead' as const, content: leadResponse }];
+        setConversationHistory(newHistory);
+        setIsGenerating(true);
 
         const instruction = `O lead respondeu: "${leadResponse}". 
 Contexto: ${result.nome_projeto || 'Script de vendas'}
-Mensagem anterior: ${getCurrentMessage()}
 Gere UMA resposta curta e persuasiva para continuar a conversa.`;
 
         try {
             await handleRefine(instruction);
-            setCurrentStep(prev => prev + 1);
+            // After refine, the next step from roteiro will be used or a new response generated
+            const stepIndex = Math.floor(newHistory.length / 2);
+            if (roteiroSteps[stepIndex]) {
+                setConversationHistory([...newHistory, { type: 'you', content: roteiroSteps[stepIndex] }]);
+            }
         } catch (e) {
             console.error(e);
         }
@@ -76,100 +90,123 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
     };
 
     return (
-        <div className="w-full max-w-3xl mx-auto font-sans">
+        <div className="w-full max-w-4xl mx-auto font-sans">
 
-            {/* Header - Clean and minimal */}
-            <div className="mb-10">
+            {/* Header */}
+            <div className="mb-12 text-center">
                 <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
                     {result.nome_projeto || 'Script de Vendas'}
                 </h2>
-                <p className="text-gray-500 text-sm mt-1">Siga o fluxo da conversa</p>
+                <p className="text-gray-500 text-sm mt-1">Fluxo da conversa</p>
             </div>
 
-            {/* Conversation Flow */}
-            <div className="space-y-5">
+            {/* Zigzag Flowchart */}
+            <div className="relative">
+                {allItems.map((item, index) => (
+                    <div key={index} className="relative">
+                        {/* Connector Arrow */}
+                        {index > 0 && (
+                            <div className={`flex items-center justify-center py-3 ${item.position === 'left' ? 'pr-[50%]' : 'pl-[50%]'}`}>
+                                <div className="flex items-center gap-1 text-gray-300">
+                                    {item.position === 'left' ? (
+                                        <>
+                                            <ArrowDown className="w-4 h-4" />
+                                            <div className="w-16 h-0.5 bg-gray-200" />
+                                            <ArrowLeft className="w-4 h-4" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ArrowRight className="w-4 h-4" />
+                                            <div className="w-16 h-0.5 bg-gray-200" />
+                                            <ArrowDown className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
-                {/* Opening Message */}
-                <MessageCard
-                    step={1}
-                    label="Abertura"
-                    content={result.mensagem_abertura}
-                    isActive={currentStep === 0}
-                />
-
-                {/* Previous conversation */}
-                {conversation.map((msg, i) => (
-                    <MessageCard
-                        key={i}
-                        type={msg.type}
-                        content={msg.content}
-                    />
+                        {/* Message Box */}
+                        <div className={`flex ${item.position === 'left' ? 'justify-start' : 'justify-end'}`}>
+                            <div className={`w-[48%] ${item.type === 'loading' ? '' : ''}`}>
+                                {item.type === 'loading' ? (
+                                    // Loading Box
+                                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                                        <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
+                                        <p className="text-sm text-gray-400">Gerando resposta...</p>
+                                    </div>
+                                ) : item.type === 'you' ? (
+                                    // Your message (SIM style)
+                                    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                                        {index === 0 && (
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <span className="text-xs font-bold text-gray-900 uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded">SIM</span>
+                                                <span className="text-xs text-gray-400">Abertura</span>
+                                            </div>
+                                        )}
+                                        <p className="text-gray-700 text-sm leading-relaxed">{item.content}</p>
+                                        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+                                            <CopyBtn text={item.content} />
+                                            <WhatsAppBtn text={item.content} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Lead's response
+                                    <div className="bg-gray-100 border border-gray-200 rounded-xl p-5">
+                                        <span className="text-xs text-gray-500 mb-2 block">Lead respondeu:</span>
+                                        <p className="text-gray-700 text-sm leading-relaxed italic">"{item.content}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 ))}
 
-                {/* Current step from roteiro */}
-                {currentStep > 0 && roteiroSteps[currentStep - 1] && !isGenerating && (
-                    <MessageCard
-                        step={currentStep + 1}
-                        label={`Passo ${currentStep + 1}`}
-                        content={roteiroSteps[currentStep - 1].content}
-                        isActive={true}
-                    />
-                )}
-
-                {/* Loading */}
-                {isGenerating && (
-                    <div className="flex items-center gap-2 text-gray-400 text-sm py-4">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Gerando resposta...</span>
-                    </div>
-                )}
-
-                {/* Decision Point - Neutral styling */}
+                {/* Next Step: Decision or Input */}
                 {!isGenerating && !showFollowUp && (
-                    <div className="py-6">
+                    <div className="mt-8 pt-4">
+                        {/* Connector */}
+                        <div className="flex justify-center py-3">
+                            <ArrowDown className="w-5 h-5 text-gray-300" />
+                        </div>
+
+                        {/* Decision Box */}
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                            <p className="text-center text-gray-600 font-medium mb-5">O lead respondeu?</p>
+                            <p className="text-center text-gray-600 font-medium text-sm mb-5">O lead respondeu?</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* YES */}
                                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center gap-2 text-gray-700 font-medium text-sm mb-3">
-                                        <div className="w-5 h-5 rounded-full bg-gray-900 flex items-center justify-center">
-                                            <CheckCircle className="w-3 h-3 text-white" />
-                                        </div>
-                                        SIM - Cole a resposta
+                                        <CheckCircle className="w-4 h-4 text-gray-600" />
+                                        SIM
                                     </div>
                                     <textarea
                                         value={leadResponse}
                                         onChange={(e) => setLeadResponse(e.target.value)}
-                                        placeholder="Cole o que o lead respondeu..."
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-300 placeholder:text-gray-400"
-                                        rows={3}
+                                        placeholder="Cole a resposta do lead..."
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-300"
+                                        rows={2}
                                     />
                                     <button
                                         onClick={handleLeadResponded}
-                                        disabled={!leadResponse.trim() || isGenerating}
-                                        className="w-full mt-3 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
+                                        disabled={!leadResponse.trim()}
+                                        className="w-full mt-3 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium py-2 rounded-lg transition-colors"
                                     >
                                         <Send className="w-4 h-4" />
-                                        Gerar Resposta
+                                        Gerar
                                     </button>
                                 </div>
 
                                 {/* NO */}
                                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center gap-2 text-gray-700 font-medium text-sm mb-3">
-                                        <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center">
-                                            <XCircle className="w-3 h-3 text-white" />
-                                        </div>
-                                        NÃO respondeu
+                                        <XCircle className="w-4 h-4 text-gray-400" />
+                                        NÃO
                                     </div>
-                                    <p className="text-sm text-gray-500 mb-4">
-                                        Use um follow-up para reengajar o lead.
-                                    </p>
+                                    <p className="text-sm text-gray-500 mb-3">Use um follow-up</p>
                                     <button
                                         onClick={() => setShowFollowUp(true)}
-                                        className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium py-2.5 rounded-lg transition-colors"
+                                        className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-medium py-2 rounded-lg transition-colors"
                                     >
                                         <Clock className="w-4 h-4" />
                                         Ver Follow-ups
@@ -180,150 +217,88 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                     </div>
                 )}
 
-                {/* Follow-up Section */}
+                {/* Follow-ups */}
                 {showFollowUp && (
-                    <div className="py-4 animate-in fade-in duration-300">
+                    <div className="mt-6 animate-in fade-in duration-300">
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-gray-500" />
-                                    <span className="font-medium text-gray-700 text-sm">Follow-ups</span>
-                                </div>
-                                <button onClick={() => setShowFollowUp(false)} className="text-xs text-gray-500 hover:text-gray-700">
-                                    ← Voltar
-                                </button>
+                                <span className="font-medium text-gray-700 text-sm">Follow-ups</span>
+                                <button onClick={() => setShowFollowUp(false)} className="text-xs text-gray-500 hover:text-gray-700">← Voltar</button>
                             </div>
-
                             <div className="space-y-3">
-                                {followUps.length > 0 ? followUps.map((msg: string, i: number) => (
-                                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-medium text-gray-500">
-                                                Após {(i + 1) * 24}h
-                                            </span>
-                                            <div className="flex items-center gap-1">
-                                                <CopyButton text={msg} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" />
-                                            </div>
+                                {followUps.map((msg: string, i: number) => (
+                                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between gap-3">
+                                        <div>
+                                            <span className="text-xs text-gray-500">Após {(i + 1) * 24}h</span>
+                                            <p className="text-gray-700 text-sm mt-1">{msg}</p>
                                         </div>
-                                        <p className="text-gray-700 text-sm">{msg}</p>
+                                        <CopyBtn text={msg} />
                                     </div>
-                                )) : (
-                                    <p className="text-gray-400 text-sm">Nenhum follow-up disponível</p>
-                                )}
+                                ))}
                             </div>
                         </div>
                     </div>
                 )}
-
-                {/* Objections - Minimal styling */}
-                {result.respostas_objecoes && Object.keys(result.respostas_objecoes).length > 0 && (
-                    <div className="mt-10 pt-8 border-t border-gray-100">
-                        <h3 className="font-medium text-gray-700 text-sm mb-4">Respostas para Objeções</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {Object.entries(result.respostas_objecoes).slice(0, userPlan === 'free' ? 3 : undefined).map(([key, value], i) => (
-                                <div key={key} className="bg-gray-50 border border-gray-100 rounded-lg p-4 group hover:border-gray-200 transition-colors">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">"{key.replace(/_/g, ' ')}"</span>
-                                        <CopyButton text={value as string} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded transition-opacity" />
-                                    </div>
-                                    <p className="text-sm text-gray-700">{value as string}</p>
-                                </div>
-                            ))}
-                            {userPlan === 'free' && Object.keys(result.respostas_objecoes).length > 3 && (
-                                <div
-                                    onClick={() => router.push('/dashboard/billing')}
-                                    className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
-                                >
-                                    <div className="text-center">
-                                        <Zap className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                                        <span className="text-sm text-gray-500">+{Object.keys(result.respostas_objecoes).length - 3} objeções</span>
-                                        <p className="text-xs text-gray-400">Upgrade</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
             </div>
 
-            {/* New Script Button */}
-            {onReset && (
-                <div className="flex justify-center pt-12">
-                    <button
-                        onClick={onReset}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Novo Script
-                    </button>
+            {/* Objections */}
+            {result.respostas_objecoes && Object.keys(result.respostas_objecoes).length > 0 && (
+                <div className="mt-12 pt-8 border-t border-gray-100">
+                    <h3 className="font-medium text-gray-700 text-sm mb-4">Objeções</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {Object.entries(result.respostas_objecoes).slice(0, userPlan === 'free' ? 3 : undefined).map(([key, value]) => (
+                            <div key={key} className="bg-gray-50 border border-gray-100 rounded-lg p-4 group hover:border-gray-200">
+                                <span className="text-xs font-medium text-gray-500 uppercase">"{key.replace(/_/g, ' ')}"</span>
+                                <p className="text-sm text-gray-700 mt-1">{value as string}</p>
+                                <CopyBtn text={value as string} className="mt-2 opacity-0 group-hover:opacity-100" />
+                            </div>
+                        ))}
+                        {userPlan === 'free' && Object.keys(result.respostas_objecoes).length > 3 && (
+                            <div onClick={() => router.push('/dashboard/billing')} className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-4 flex items-center justify-center cursor-pointer hover:bg-gray-100">
+                                <div className="text-center">
+                                    <Zap className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                                    <span className="text-sm text-gray-500">+{Object.keys(result.respostas_objecoes).length - 3}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
+            {/* New Script */}
+            {onReset && (
+                <div className="flex justify-center pt-12">
+                    <button onClick={onReset} className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <Plus className="w-4 h-4" /> Novo Script
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
 
-// ========== MESSAGE CARD - Clean & Minimal ==========
-interface MessageCardProps {
-    type?: 'you' | 'lead';
-    content: string;
-    step?: number;
-    label?: string;
-    isActive?: boolean;
+// Compact Copy Button
+function CopyBtn({ text, className = '' }: { text: string; className?: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <button
+            onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+            className={`flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all ${className}`}
+        >
+            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {copied ? 'Copiado' : 'Copiar'}
+        </button>
+    );
 }
 
-function MessageCard({ type = 'you', content, step, label, isActive }: MessageCardProps) {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(content);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const isLead = type === 'lead';
-
+// Compact WhatsApp Button
+function WhatsAppBtn({ text }: { text: string }) {
     return (
-        <div className={`${isLead ? 'pl-8' : ''}`}>
-            {label && (
-                <div className="flex items-center gap-2 mb-2">
-                    {step && (
-                        <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-medium flex items-center justify-center">
-                            {step}
-                        </span>
-                    )}
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
-                </div>
-            )}
-            <div className={`
-                rounded-xl p-4 border
-                ${isLead
-                    ? 'bg-gray-100 border-gray-200 text-gray-600'
-                    : `bg-white border-gray-200 ${isActive ? 'ring-1 ring-gray-900 ring-offset-1' : ''}`
-                }
-            `}>
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
-
-                {!isLead && (
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                        <button
-                            onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(content)}`, '_blank')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
-                        >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            WhatsApp
-                        </button>
-                        <button
-                            onClick={handleCopy}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
-                        >
-                            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            {copied ? 'Copiado' : 'Copiar'}
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
+        <button
+            onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all"
+        >
+            <MessageSquare className="w-3 h-3" /> WhatsApp
+        </button>
     );
 }
