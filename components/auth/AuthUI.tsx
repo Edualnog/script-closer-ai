@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useId, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -91,15 +91,15 @@ export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputE
     label?: string;
 }
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-    ({ className, label, ...props }, ref) => {
-        const id = useId();
+    ({ className, label, id, ...props }, ref) => {
         const [showPassword, setShowPassword] = useState(false);
         const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+        const inputId = id || "password-input";
         return (
             <div className="grid w-full items-center gap-2">
-                {label && <Label htmlFor={id}>{label}</Label>}
+                {label && <Label htmlFor={inputId}>{label}</Label>}
                 <div className="relative">
-                    <Input id={id} type={showPassword ? "text" : "password"} className={cn("pe-10", className)} ref={ref} {...props} />
+                    <Input id={inputId} type={showPassword ? "text" : "password"} className={cn("pe-10", className)} ref={ref} {...props} />
                     <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-gray-400 transition-colors hover:text-gray-200 focus-visible:text-gray-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50" aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
                         {showPassword ? (<EyeOff className="size-4" aria-hidden="true" />) : (<Eye className="size-4" aria-hidden="true" />)}
                     </button>
@@ -216,12 +216,9 @@ function SignInForm() {
             }
 
             router.refresh();
-            const hasPendingScript = localStorage.getItem('pending_script_generation');
-            if (hasPendingScript) {
-                router.push('/app/generate');
-            } else {
-                router.push('/app');
-            }
+            // Clear any pending script and go to dashboard
+            localStorage.removeItem('pending_script_generation');
+            router.push('/dashboard');
         } catch (error: any) {
             setError(error.message || 'Erro ao entrar. Verifique suas credenciais.');
         } finally {
@@ -392,11 +389,11 @@ export function AuthUI({ initialIsSignIn = true }: { initialIsSignIn?: boolean }
         // For now, regardless of plan, we go to /app as per request flow "to know which plan... but appear only first time"
         // In a real app, this would trigger checkout for paid plans.
         console.log("Selected plan:", plan);
-        router.push('/app');
+        router.push('/dashboard');
     };
 
     const handleClosePricing = () => {
-        router.push('/app');
+        router.push('/dashboard');
     };
 
     return (

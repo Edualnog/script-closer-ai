@@ -108,7 +108,7 @@ export function UserNav() {
 
                     <div className="px-1 space-y-0.5">
                         <Link
-                            href="/app/billing"
+                            href="/dashboard/billing"
                             onClick={() => setIsOpen(false)}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                         >

@@ -43,7 +43,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     return (
         <div className="space-y-6">
             <div>
-                <Link href="/app/products" className="text-sm text-gray-500 hover:text-gray-900 flex items-center mb-4">
+                <Link href="/dashboard/products" className="text-sm text-gray-500 hover:text-gray-900 flex items-center mb-4">
                     <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">{product.nome}</h1>

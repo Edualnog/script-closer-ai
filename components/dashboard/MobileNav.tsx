@@ -12,7 +12,7 @@ export function MobileNav() {
         <>
             {/* Mobile Header */}
             <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4 lg:hidden">
-                <Link href="/app" className="flex items-center gap-2">
+                <Link href="/dashboard" className="flex items-center gap-2">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-black text-white shadow-sm">
                         <Sparkles className="h-4 w-4" />
                     </div>

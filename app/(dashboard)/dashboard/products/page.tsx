@@ -21,7 +21,7 @@ export default async function ProductsPage() {
                         <li className="px-6 py-10 text-center text-gray-500">
                             Nenhum produto encontrado.
                             <div className="mt-4">
-                                <Link href="/app/generate" className="text-indigo-600 hover:text-indigo-500 font-medium">
+                                <Link href="/dashboard/generate" className="text-indigo-600 hover:text-indigo-500 font-medium">
                                     Gerar primeiro script &rarr;
                                 </Link>
                             </div>
@@ -29,7 +29,7 @@ export default async function ProductsPage() {
                     ) : (
                         products.map((product) => (
                             <li key={product.id}>
-                                <Link href={`/app/products/${product.id}`} className="block hover:bg-gray-50">
+                                <Link href={`/dashboard/products/${product.id}`} className="block hover:bg-gray-50">
                                     <div className="flex items-center px-4 py-4 sm:px-6">
                                         <div className="min-w-0 flex-1 flex items-center">
                                             <div className="flex-shrink-0">

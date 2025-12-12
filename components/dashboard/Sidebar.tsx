@@ -93,7 +93,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
     return (
         <div className={cn("flex grow flex-col overflow-y-auto bg-gray-50/50 border-r border-gray-200 px-4 pb-4 pt-6 h-full", className)}>
             <Link
-                href="/app"
+                href="/dashboard"
                 onClick={handleLinkClick}
                 className="flex items-center gap-2 px-2 mb-6 hover:opacity-80 transition-opacity"
             >
@@ -104,7 +104,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
             </Link>
 
             <Link
-                href="/app"
+                href="/dashboard"
                 onClick={handleLinkClick}
                 className="mx-2 mb-2 flex items-center justify-center gap-2 bg-black text-white py-2.5 rounded-lg text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors"
             >
@@ -129,10 +129,10 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
 
                     <li>
                         <div className="text-xs font-semibold leading-6 text-gray-400 uppercase tracking-wider px-2 mb-2 flex justify-between items-center group">
-                            <Link href="/app/products" onClick={handleLinkClick} className="hover:text-gray-600 transition-colors">
+                            <Link href="/dashboard/products" onClick={handleLinkClick} className="hover:text-gray-600 transition-colors">
                                 SCRIPTS
                             </Link>
-                            <Link href="/app" onClick={handleLinkClick} className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-600">
+                            <Link href="/dashboard" onClick={handleLinkClick} className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-600">
                                 <Plus className="w-3 h-3" />
                             </Link>
                         </div>
@@ -145,10 +145,10 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
                                 filteredProjects.map((project) => (
                                     <li key={project.id}>
                                         <Link
-                                            href={`/app/products/${project.id}`}
+                                            href={`/dashboard/products/${project.id}`}
                                             onClick={handleLinkClick}
                                             className={cn(
-                                                pathname === `/app/products/${project.id}`
+                                                pathname === `/dashboard/products/${project.id}`
                                                     ? 'bg-white text-black shadow-sm border border-gray-200/50'
                                                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
                                                 'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-all truncate'
