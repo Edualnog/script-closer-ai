@@ -497,9 +497,60 @@ export function AICommandCenter({ initialChannel, initialProduct }: AICommandCen
                             </div>
                         )}
 
+                        {/* Lead Response Box - Shows AFTER script is generated */}
+                        {result && (
+                            <div className="w-full max-w-2xl mx-auto mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <MessageCircle className="w-4 h-4 text-purple-500" />
+                                    <span className="text-sm font-medium text-gray-700">Responder Lead</span>
+                                    <span className="text-xs text-gray-400">• Cole a pergunta do lead abaixo</span>
+                                </div>
+                                <div className="bg-gray-100 border border-gray-200 rounded-2xl p-3 shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <textarea
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    if (description.trim()) {
+                                                        handleRefine(`O lead respondeu: "${description}". Gere uma resposta persuasiva baseada no contexto do script.`);
+                                                        setDescription('');
+                                                    }
+                                                }
+                                            }}
+                                            placeholder="Cole aqui a mensagem que o lead enviou..."
+                                            className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-500 resize-none outline-none text-sm leading-relaxed min-h-[44px] max-h-[100px]"
+                                            rows={1}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (description.trim()) {
+                                                    handleRefine(`O lead respondeu: "${description}". Gere uma resposta persuasiva baseada no contexto do script.`);
+                                                    setDescription('');
+                                                }
+                                            }}
+                                            disabled={!description.trim()}
+                                            className={cn(
+                                                "w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm",
+                                                description.trim()
+                                                    ? "bg-purple-600 text-white hover:bg-purple-700 hover:scale-105"
+                                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                            )}
+                                        >
+                                            <ArrowUp className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2 text-center">
+                                    ⌘+Enter para enviar • A IA vai responder baseada no seu script
+                                </p>
+                            </div>
+                        )}
+
                         {/* Scroll Down Indicator */}
                         {result && (
-                            <div className="flex flex-col items-center mt-12 animate-bounce-slow">
+                            <div className="flex flex-col items-center mt-8 animate-bounce-slow">
                                 <p className="text-sm text-gray-400 mb-2">Veja seu script abaixo</p>
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform" onClick={() => resultRef.current?.scrollIntoView({ behavior: 'smooth' })}>
                                     <ArrowDown className="w-6 h-6 text-white" />
