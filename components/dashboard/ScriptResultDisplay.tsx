@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check, ArrowRight, ArrowLeft, ArrowDown } from 'lucide-react'
-import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
+import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check, ArrowDown } from 'lucide-react'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
 
@@ -18,13 +17,12 @@ interface ScriptResultDisplayProps {
     onReset?: () => void;
 }
 
-export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }: ScriptResultDisplayProps) {
+export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultDisplayProps) {
     const router = useRouter();
     const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>([]);
     const [leadResponse, setLeadResponse] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGeneratingLocal, setIsGeneratingLocal] = useState(false);
     const [showFollowUp, setShowFollowUp] = useState(false);
-    const [pendingResponse, setPendingResponse] = useState<string | null>(null);
 
     if (!result) return null;
 
@@ -41,108 +39,87 @@ export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }:
     const roteiroSteps = parseRoteiro(result.roteiro_conversa);
     const followUps = Array.isArray(result.follow_up) ? result.follow_up : [];
 
-    // Build all items to display
-    const allItems: { type: 'you' | 'lead' | 'loading'; content: string; position: 'left' | 'right' }[] = [];
+    // Build all items - keeps existing script and appends conversation
+    const buildFlowItems = () => {
+        const items: { type: 'you' | 'lead' | 'loading'; content: string; position: 'left' | 'right'; label?: string }[] = [];
 
-    // First: Opening message (SIM box)
-    allItems.push({ type: 'you', content: result.mensagem_abertura, position: 'left' });
+        // 1. Opening message (always first)
+        items.push({ type: 'you', content: result.mensagem_abertura, position: 'left', label: 'Abertura' });
 
-    // Then: alternate between lead responses and your responses from history
-    conversationHistory.forEach((item, i) => {
-        allItems.push({
-            type: item.type,
-            content: item.content,
-            position: item.type === 'lead' ? 'right' : 'left'
+        // 2. All conversation history (alternating)
+        conversationHistory.forEach((item, i) => {
+            items.push({
+                type: item.type,
+                content: item.content,
+                position: item.type === 'lead' ? 'right' : 'left',
+                label: item.type === 'lead' ? 'Lead' : `Passo ${Math.floor(i / 2) + 2}`
+            });
         });
-    });
 
-    // Add loading state if generating
-    if (isGenerating) {
-        allItems.push({ type: 'loading', content: '', position: 'left' });
-    }
-
-    const handleLeadResponded = async () => {
-        if (!leadResponse.trim() || !handleRefine) return;
-
-        // Add lead's response to history
-        const newHistory = [...conversationHistory, { type: 'lead' as const, content: leadResponse }];
-        setConversationHistory(newHistory);
-        setIsGenerating(true);
-
-        const instruction = `O lead respondeu: "${leadResponse}". 
-Contexto: ${result.nome_projeto || 'Script de vendas'}
-Gere UMA resposta curta e persuasiva para continuar a conversa.`;
-
-        try {
-            await handleRefine(instruction);
-            // After refine, the next step from roteiro will be used or a new response generated
-            const stepIndex = Math.floor(newHistory.length / 2);
-            if (roteiroSteps[stepIndex]) {
-                setConversationHistory([...newHistory, { type: 'you', content: roteiroSteps[stepIndex] }]);
-            }
-        } catch (e) {
-            console.error(e);
+        // 3. Loading box (inline, not full-screen)
+        if (isGeneratingLocal) {
+            items.push({ type: 'loading', content: '', position: 'left' });
         }
 
+        return items;
+    };
+
+    const handleLeadResponded = () => {
+        if (!leadResponse.trim()) return;
+
+        // 1. Add lead's message
+        const newHistory = [...conversationHistory, { type: 'lead' as const, content: leadResponse }];
+        setConversationHistory(newHistory);
         setLeadResponse('');
-        setIsGenerating(false);
+        setIsGeneratingLocal(true);
+
+        // 2. Simulate brief loading then add next step from roteiro
+        setTimeout(() => {
+            const stepIndex = Math.floor(newHistory.length / 2);
+            const nextStep = roteiroSteps[stepIndex] || roteiroSteps[roteiroSteps.length - 1] || 'Continue a conversa normalmente.';
+            setConversationHistory([...newHistory, { type: 'you', content: nextStep }]);
+            setIsGeneratingLocal(false);
+        }, 800);
+
         setShowFollowUp(false);
     };
+
+    const flowItems = buildFlowItems();
 
     return (
         <div className="w-full max-w-4xl mx-auto font-sans">
 
             {/* Header */}
-            <div className="mb-12 text-center">
+            <div className="mb-8 text-center">
                 <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
                     {result.nome_projeto || 'Script de Vendas'}
                 </h2>
                 <p className="text-gray-500 text-sm mt-1">Fluxo da conversa</p>
             </div>
 
-            {/* Zigzag Flowchart */}
+            {/* Flowchart */}
             <div className="relative">
-                {allItems.map((item, index) => (
-                    <div key={index} className="relative">
-                        {/* Connector Arrow */}
+                {flowItems.map((item, index) => (
+                    <div key={index} className="relative mb-4">
+                        {/* Arrow connector */}
                         {index > 0 && (
-                            <div className={`flex items-center justify-center py-3 ${item.position === 'left' ? 'pr-[50%]' : 'pl-[50%]'}`}>
-                                <div className="flex items-center gap-1 text-gray-300">
-                                    {item.position === 'left' ? (
-                                        <>
-                                            <ArrowDown className="w-4 h-4" />
-                                            <div className="w-16 h-0.5 bg-gray-200" />
-                                            <ArrowLeft className="w-4 h-4" />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <ArrowRight className="w-4 h-4" />
-                                            <div className="w-16 h-0.5 bg-gray-200" />
-                                            <ArrowDown className="w-4 h-4" />
-                                        </>
-                                    )}
-                                </div>
+                            <div className="flex justify-center py-2">
+                                <ArrowDown className="w-4 h-4 text-gray-300" />
                             </div>
                         )}
 
-                        {/* Message Box */}
+                        {/* Box */}
                         <div className={`flex ${item.position === 'left' ? 'justify-start' : 'justify-end'}`}>
-                            <div className={`w-[48%] ${item.type === 'loading' ? '' : ''}`}>
+                            <div className="w-[75%] md:w-[60%]">
                                 {item.type === 'loading' ? (
-                                    // Loading Box
-                                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
+                                    // INLINE Loading - only in this box
+                                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-5 text-center">
                                         <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
                                         <p className="text-sm text-gray-400">Gerando resposta...</p>
                                     </div>
                                 ) : item.type === 'you' ? (
-                                    // Your message (SIM style)
-                                    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                                        {index === 0 && (
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="text-xs font-bold text-gray-900 uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded">SIM</span>
-                                                <span className="text-xs text-gray-400">Abertura</span>
-                                            </div>
-                                        )}
+                                    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                                        <span className="text-xs text-gray-400 mb-2 block">{item.label}</span>
                                         <p className="text-gray-700 text-sm leading-relaxed">{item.content}</p>
                                         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
                                             <CopyBtn text={item.content} />
@@ -150,9 +127,8 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                                         </div>
                                     </div>
                                 ) : (
-                                    // Lead's response
                                     <div className="bg-gray-100 border border-gray-200 rounded-xl p-5">
-                                        <span className="text-xs text-gray-500 mb-2 block">Lead respondeu:</span>
+                                        <span className="text-xs text-gray-500 mb-2 block">{item.label}</span>
                                         <p className="text-gray-700 text-sm leading-relaxed italic">"{item.content}"</p>
                                     </div>
                                 )}
@@ -161,15 +137,13 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                     </div>
                 ))}
 
-                {/* Next Step: Decision or Input */}
-                {!isGenerating && !showFollowUp && (
-                    <div className="mt-8 pt-4">
-                        {/* Connector */}
-                        <div className="flex justify-center py-3">
-                            <ArrowDown className="w-5 h-5 text-gray-300" />
+                {/* Decision Point - only show when not loading */}
+                {!isGeneratingLocal && !showFollowUp && (
+                    <div className="mt-6">
+                        <div className="flex justify-center py-2">
+                            <ArrowDown className="w-4 h-4 text-gray-300" />
                         </div>
 
-                        {/* Decision Box */}
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
                             <p className="text-center text-gray-600 font-medium text-sm mb-5">O lead respondeu?</p>
 
@@ -177,7 +151,7 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                                 {/* YES */}
                                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center gap-2 text-gray-700 font-medium text-sm mb-3">
-                                        <CheckCircle className="w-4 h-4 text-gray-600" />
+                                        <CheckCircle className="w-4 h-4" />
                                         SIM
                                     </div>
                                     <textarea
@@ -193,7 +167,7 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                                         className="w-full mt-3 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white text-sm font-medium py-2 rounded-lg transition-colors"
                                     >
                                         <Send className="w-4 h-4" />
-                                        Gerar
+                                        Próximo
                                     </button>
                                 </div>
 
@@ -209,7 +183,7 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
                                         className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-medium py-2 rounded-lg transition-colors"
                                     >
                                         <Clock className="w-4 h-4" />
-                                        Ver Follow-ups
+                                        Follow-ups
                                     </button>
                                 </div>
                             </div>
@@ -219,7 +193,7 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
 
                 {/* Follow-ups */}
                 {showFollowUp && (
-                    <div className="mt-6 animate-in fade-in duration-300">
+                    <div className="mt-6 animate-in fade-in">
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="font-medium text-gray-700 text-sm">Follow-ups</span>
@@ -277,7 +251,7 @@ Gere UMA resposta curta e persuasiva para continuar a conversa.`;
     );
 }
 
-// Compact Copy Button
+// Copy Button
 function CopyBtn({ text, className = '' }: { text: string; className?: string }) {
     const [copied, setCopied] = useState(false);
     return (
@@ -291,7 +265,7 @@ function CopyBtn({ text, className = '' }: { text: string; className?: string })
     );
 }
 
-// Compact WhatsApp Button
+// WhatsApp Button
 function WhatsAppBtn({ text }: { text: string }) {
     return (
         <button
