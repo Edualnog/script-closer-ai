@@ -317,7 +317,10 @@ export default function GeneratePage() {
                                     </div>
 
                                     {isLocked && (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/10 z-10 cursor-pointer hover:bg-gray-50/20 transition-colors">
+                                        <div
+                                            onClick={() => router.push('/app/billing')}
+                                            className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/10 z-10 cursor-pointer hover:bg-gray-50/20 transition-colors"
+                                        >
                                             <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm mb-2">
                                                 <Zap className="w-5 h-5 text-yellow-500 fill-current" />
                                             </div>
