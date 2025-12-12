@@ -229,22 +229,6 @@ export function ScriptFlowView({ script, productName, productId }: ScriptFlowVie
                     </div>
                 )}
             </div>
-
-            {/* Objections */}
-            {script.respostas_objecoes && Object.keys(script.respostas_objecoes).length > 0 && (
-                <div className="mt-12 pt-8 border-t border-gray-100">
-                    <h3 className="font-medium text-gray-700 text-sm mb-4">Objeções</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {Object.entries(script.respostas_objecoes).map(([key, value]) => (
-                            <div key={key} className="bg-gray-50 border border-gray-100 rounded-lg p-4 group hover:border-gray-200">
-                                <span className="text-xs font-medium text-gray-500 uppercase">"{key.replace(/_/g, ' ')}"</span>
-                                <p className="text-sm text-gray-700 mt-1">{value}</p>
-                                <CopyBtn text={value} className="mt-2 opacity-0 group-hover:opacity-100" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
