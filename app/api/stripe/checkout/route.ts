@@ -40,8 +40,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'subscription',
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/billing?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/billing?canceled=true`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?success=true`,
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?canceled=true`,
             metadata: {
                 userId: user.id,
                 plan: plan,
