@@ -22,71 +22,66 @@ export async function POST(request: Request) {
 
         const openai = new OpenAI()
 
-        // Build conversation context with clear labels
+        // Build conversation context
         const historyText = conversationHistory && conversationHistory.length > 0
             ? conversationHistory.map((msg: any, i: number) =>
-                `[${i + 1}] ${msg.type === 'you' ? 'VOCÊ' : 'LEAD'}: "${msg.content}"`
+                `${msg.type === 'you' ? 'VOCÊ' : 'LEAD'}: "${msg.content}"`
             ).join('\n')
             : '';
 
-        // Check if Sul region - use TU
+        // Check if Sul region
         const regionLower = (region || '').toLowerCase().trim();
         const useTu = regionLower === 'sul' || regionLower.includes('sul');
 
-        console.log('Generate Response - Region:', region, '| useTu:', useTu);
+        // Count conversation turns
+        const turnCount = conversationHistory?.length || 0;
 
-        // Detect if lead is saying YES/accepting
+        // Detect lead intent
         const leadLower = leadMessage.toLowerCase();
-        const isAccepting = ['sim', 'pode', 'pode sim', 'claro', 'quero', 'manda', 'ok', 'beleza', 'bora', 'vamos', 'tá', 'ta', 'show', 'perfeito', 'legal'].some(w => leadLower.includes(w));
+        const isAccepting = ['sim', 'pode', 'claro', 'quero', 'manda', 'ok', 'beleza', 'bora', 'vamos', 'tá', 'ta', 'show', 'perfeito', 'legal', 'manda aí', 'pode mandar'].some(w => leadLower.includes(w));
+        const isObjection = leadLower.includes('caro') || leadLower.includes('planilha') || leadLower.includes('já tenho') || leadLower.includes('ja tenho') || leadLower.includes('não preciso') || leadLower.includes('nao preciso');
 
         const systemPrompt = `
-Você é um vendedor amigo no WhatsApp. ANALISE o histórico e AVANCE a conversa.
+Você é vendedor no WhatsApp. Seja DIRETO e ASSERTIVO.
 
-PRODUTO: ${productName}
-DESCRIÇÃO: ${productDescription}
+PRODUTO: ${productName} - ${productDescription}
 
-HISTÓRICO DA CONVERSA:
+CONVERSA ATÉ AQUI:
 ${historyText || '(início)'}
 
-MENSAGEM ATUAL DO LEAD: "${leadMessage}"
+LEAD DISSE: "${leadMessage}"
 
-${useTu ? `
-REGIÃO SUL - USE "TU":
-- Diga "tu", "teu", "te" ao invés de "você", "seu"
-- Ex: "tu viu", "pro teu negócio", "te ajuda"
-` : ''}
+${useTu ? 'USE "TU" (região Sul): tu, teu, te.' : ''}
 
-REGRAS CRÍTICAS:
-1. ${isAccepting ? '⚠️ O LEAD ACEITOU! Não pergunte de novo. DIGA A INFORMAÇÃO agora.' : 'Responda à pergunta/dúvida diretamente.'}
-2. NUNCA repita a mesma pergunta que você já fez
-3. Se o lead já disse SIM → dê o próximo passo concreto (link, preço, demo, etc)
-4. Se ele perguntou algo → responda EXATAMENTE isso
-5. MÁXIMO 2 linhas, tom coloquial
-6. SEM EMOJI
-7. Avance a venda a cada resposta
+REGRAS DE OURO:
+1. ${isAccepting ? '🟢 LEAD ACEITOU! MANDE O LINK ou diga "Te mandei aqui [link]" - NÃO pergunte de novo!' : ''}
+2. ${isObjection ? '🟡 OBJEÇÃO! Valide primeiro ("entendo") depois mostre diferencial rápido.' : ''}
+3. ${turnCount >= 3 ? '⚠️ Já são ' + turnCount + ' mensagens. É hora de FECHAR: mande link, marque demo, dê preço.' : ''}
+4. NUNCA termine com "Quer que eu te mande X?" se você já ofereceu isso antes
+5. Se já perguntou, agora MANDA: "Olha, te mandei o link: [link da demo]"
+6. MÁXIMO 2 linhas
+7. SEM EMOJI
+8. Seja assertivo: "Te passo o acesso", "O link é esse:", "Vou te mandar agora"
 
-${isAccepting ? `
-IMPORTANTE: O lead disse "${leadMessage}" que é um SIM.
-NÃO pergunte "quer saber mais?" de novo.
-DÊ a informação prometida ou ofereça próximo passo concreto.
-` : ''}
+Se o lead aceitou algo, NÃO pergunte novamente. FAÇA.
+Ex: Lead disse "pode mandar" → Você: "Pronto, te mandei: [link]. Dá uma olhada e me conta."
 
-Responda apenas com o texto da mensagem, sem aspas.
+Responda só o texto, sem aspas.
 `;
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Responda de forma que AVANCE a conversa. ${isAccepting ? 'Lead aceitou - dê a informação!' : ''}` }
+                { role: "user", content: `Responda de forma assertiva. ${isAccepting ? 'Lead disse SIM - MANDE agora!' : ''} ${turnCount >= 3 ? 'Hora de fechar!' : ''}` }
             ],
-            temperature: 0.7,
-            max_tokens: 120
+            temperature: 0.6,
+            max_tokens: 100
         })
 
         let responseText = response.choices[0].message.content?.trim() || ''
 
-        // Force remove any emojis
+        // Remove emojis
         responseText = responseText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
 
         return NextResponse.json({ response: responseText })
