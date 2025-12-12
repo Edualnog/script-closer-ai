@@ -134,7 +134,10 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                     productName: result.nome_projeto || 'Produto',
                     productDescription: result.mensagem_abertura,
                     leadMessage: savedLeadMessage,
-                    conversationHistory: newHistory
+                    conversationHistory: newHistory,
+                    leadType: result.tipo_lead || result.leadType || 'morno',
+                    region: result.regiao || result.region || 'Neutro',
+                    salesChannel: result.canal_venda || result.salesChannel || 'WhatsApp'
                 })
             });
 

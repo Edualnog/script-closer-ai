@@ -13,6 +13,9 @@ interface ScriptFlowViewProps {
         roteiro_conversa: string;
         respostas_objecoes: Record<string, string>;
         follow_up: string[] | null;
+        tipo_lead?: string;    // frio, morno, quente
+        canal_venda?: string;  // whatsapp, instagram, etc
+        regiao?: string;       // Sul, SP, RJ, Nordeste, Neutro
     };
     productName: string;
     productId: string;
@@ -102,7 +105,10 @@ export function ScriptFlowView({ script, productName, productId }: ScriptFlowVie
                     productName: productName,
                     productDescription: script.mensagem_abertura,
                     leadMessage: leadResponse,
-                    conversationHistory: newHistory
+                    conversationHistory: newHistory,
+                    leadType: script.tipo_lead || 'morno',
+                    region: script.regiao || 'Neutro',
+                    salesChannel: script.canal_venda || 'WhatsApp'
                 })
             });
 
