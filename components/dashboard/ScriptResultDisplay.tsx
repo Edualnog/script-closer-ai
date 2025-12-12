@@ -32,9 +32,20 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
         const rawText = String(text || '');
         const stepPattern = /(?:Passo\s*\d+[:\.]?\s*|^\d+[:\.\)]\s*)/gi;
         const parts = rawText.split(stepPattern).filter(part => part.trim().length > 0);
-        if (parts.length > 1) return parts.map(part => part.trim());
+
+        // Clean up function to remove formatting artifacts
+        const cleanText = (t: string) => {
+            return t
+                .trim()
+                .replace(/^[:\s"']+/, '')  // Remove leading colons, quotes, spaces
+                .replace(/[:\s"',]+$/, '') // Remove trailing colons, quotes, commas
+                .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+                .trim();
+        };
+
+        if (parts.length > 1) return parts.map(cleanText);
         return rawText.split('\n').filter(line => line.trim().length > 3).map(line =>
-            line.replace(/^(\d+[\.\):]?\s*|Passo\s*\d+[:\.]?\s*)/i, '').trim()
+            cleanText(line.replace(/^(\d+[\.\):]?\s*|Passo\s*\d+[:\.]?\s*)/i, ''))
         );
     };
 
