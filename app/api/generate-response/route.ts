@@ -17,70 +17,76 @@ export async function POST(request: Request) {
             productDescription,
             leadMessage,
             conversationHistory,
-            region,
-            salesChannel
+            region
         } = body
 
         const openai = new OpenAI()
 
-        // Build conversation context
+        // Build conversation context with clear labels
         const historyText = conversationHistory && conversationHistory.length > 0
-            ? conversationHistory.map((msg: any) =>
-                `${msg.type === 'you' ? 'Vendedor' : 'Lead'}: "${msg.content}"`
+            ? conversationHistory.map((msg: any, i: number) =>
+                `[${i + 1}] ${msg.type === 'you' ? 'VOCÊ' : 'LEAD'}: "${msg.content}"`
             ).join('\n')
             : '';
 
-        // Check if Sul region - use TU (case insensitive check)
+        // Check if Sul region - use TU
         const regionLower = (region || '').toLowerCase().trim();
         const useTu = regionLower === 'sul' || regionLower.includes('sul');
 
         console.log('Generate Response - Region:', region, '| useTu:', useTu);
 
+        // Detect if lead is saying YES/accepting
+        const leadLower = leadMessage.toLowerCase();
+        const isAccepting = ['sim', 'pode', 'pode sim', 'claro', 'quero', 'manda', 'ok', 'beleza', 'bora', 'vamos', 'tá', 'ta', 'show', 'perfeito', 'legal'].some(w => leadLower.includes(w));
+
         const systemPrompt = `
-Você é um vendedor amigo conversando pelo WhatsApp. Responda de forma NATURAL e COLOQUIAL.
+Você é um vendedor amigo no WhatsApp. ANALISE o histórico e AVANCE a conversa.
 
-PRODUTO:
-${productName}: ${productDescription}
+PRODUTO: ${productName}
+DESCRIÇÃO: ${productDescription}
 
-HISTÓRICO:
-${historyText}
+HISTÓRICO DA CONVERSA:
+${historyText || '(início)'}
 
-LEAD DISSE AGORA: "${leadMessage}"
+MENSAGEM ATUAL DO LEAD: "${leadMessage}"
 
 ${useTu ? `
-🔴 REGIÃO SUL - OBRIGATÓRIO USAR "TU":
-- SEMPRE use "tu" ao invés de "você"
-- Conjugue na 3ª pessoa: "tu viu", "tu consegue", "tu quer"
-- Exemplos: "te ajuda", "teu negócio", "pro teu dia a dia"
-- NUNCA escreva "você" - use APENAS "tu"
-` : `
-Use "você" normalmente.
-`}
+REGIÃO SUL - USE "TU":
+- Diga "tu", "teu", "te" ao invés de "você", "seu"
+- Ex: "tu viu", "pro teu negócio", "te ajuda"
+` : ''}
 
 REGRAS CRÍTICAS:
-1. RESPONDA AO QUE O LEAD DISSE diretamente
-2. Tom COLOQUIAL, como um amigo explicando
-3. MÁXIMO 2 linhas curtas
-4. 🚫 PROIBIDO EMOJI - não use nenhum emoji
-5. Termine com pergunta simples
-6. Seja direto
+1. ${isAccepting ? '⚠️ O LEAD ACEITOU! Não pergunte de novo. DIGA A INFORMAÇÃO agora.' : 'Responda à pergunta/dúvida diretamente.'}
+2. NUNCA repita a mesma pergunta que você já fez
+3. Se o lead já disse SIM → dê o próximo passo concreto (link, preço, demo, etc)
+4. Se ele perguntou algo → responda EXATAMENTE isso
+5. MÁXIMO 2 linhas, tom coloquial
+6. SEM EMOJI
+7. Avance a venda a cada resposta
 
-Responda APENAS com a mensagem pronta. Sem aspas, sem emoji.
+${isAccepting ? `
+IMPORTANTE: O lead disse "${leadMessage}" que é um SIM.
+NÃO pergunte "quer saber mais?" de novo.
+DÊ a informação prometida ou ofereça próximo passo concreto.
+` : ''}
+
+Responda apenas com o texto da mensagem, sem aspas.
 `;
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Lead disse: "${leadMessage}". Responda ${useTu ? 'usando TU (nunca você)' : 'normalmente'}, SEM emoji.` }
+                { role: "user", content: `Responda de forma que AVANCE a conversa. ${isAccepting ? 'Lead aceitou - dê a informação!' : ''}` }
             ],
             temperature: 0.7,
-            max_tokens: 100
+            max_tokens: 120
         })
 
         let responseText = response.choices[0].message.content?.trim() || ''
 
-        // Force remove any emojis that slipped through
+        // Force remove any emojis
         responseText = responseText.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
 
         return NextResponse.json({ response: responseText })
