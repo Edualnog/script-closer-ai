@@ -47,13 +47,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">{product.nome}</h1>
-                <p className="mt-1 text-gray-500">{product.descricao}</p>
+                {/* Description hidden as per user request (context is internal now) */}
+                {/* <p className="mt-1 text-gray-500">{product.descricao}</p> */}
             </div>
 
             {/* Contextual AI Command Center */}
             <div className="mb-8">
                 <AICommandCenter
-                    initialContext={{
+                    initialProduct={{
                         id: product.id,
                         name: product.nome,
                         description: product.descricao

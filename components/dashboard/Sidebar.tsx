@@ -132,7 +132,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
                             <Link href="/app/products" onClick={handleLinkClick} className="hover:text-gray-600 transition-colors">
                                 SCRIPTS
                             </Link>
-                            <Link href="/app/generate" onClick={handleLinkClick} className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-600">
+                            <Link href="/app" onClick={handleLinkClick} className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-gray-600">
                                 <Plus className="w-3 h-3" />
                             </Link>
                         </div>

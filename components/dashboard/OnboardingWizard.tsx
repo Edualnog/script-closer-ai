@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, X, MessageCircle, MapPin } from "lucide-react";
+import { Sparkles, X, MessageCircle, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function OnboardingWizard({ userId }: { userId: string }) {
