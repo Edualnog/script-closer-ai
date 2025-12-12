@@ -169,7 +169,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
     const isDetailedMode = activeMode === 'script' || activeMode === 'lead_response';
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[85vh] max-w-4xl mx-auto px-4 relative">
+        <div className="flex flex-col items-center justify-center min-h-[85vh] max-w-3xl mx-auto px-4 relative">
 
             {/* Title */}
             <div className={cn(
@@ -187,7 +187,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
                 ref={containerRef}
                 className={cn(
                     "w-full bg-gray-100 border border-gray-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-300 ease-out",
-                    isExpanded && activeMode === 'script' ? "max-w-6xl" : "max-w-4xl"
+                    isExpanded && activeMode === 'script' ? "max-w-5xl" : "max-w-3xl"
                 )}
             >
                 <div className="p-4">
@@ -238,7 +238,7 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
                                     }
                                     className={cn(
                                         "w-full bg-transparent text-gray-900 placeholder:text-gray-500 resize-none outline-none text-base leading-relaxed pl-1",
-                                        isExpanded ? "min-h-[80px]" : "min-h-[40px]"
+                                        isExpanded ? "min-h-[60px]" : "min-h-[40px]"
                                     )}
                                 />
                             </div>

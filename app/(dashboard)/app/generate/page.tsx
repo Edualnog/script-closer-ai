@@ -210,7 +210,7 @@ export default function GeneratePage() {
 
             {/* Scroll Indicator */}
             <div className="flex justify-center mb-6 animate-bounce">
-                <ChevronDown className="w-6 h-6 text-gray-400 opacity-75" />
+                <ChevronDown className="w-8 h-8 text-indigo-400" />
             </div>
 
             {/* Results Display */}
