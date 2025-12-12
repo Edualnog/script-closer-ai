@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, ArrowDown, Loader2 } from 'lucide-react'
+import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check } from 'lucide-react'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
@@ -22,14 +22,13 @@ interface ScriptResultDisplayProps {
 export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }: ScriptResultDisplayProps) {
     const router = useRouter();
     const [conversation, setConversation] = useState<Message[]>([]);
-    const [currentStep, setCurrentStep] = useState(0); // 0 = abertura, 1+ = follow conversation
+    const [currentStep, setCurrentStep] = useState(0);
     const [leadResponse, setLeadResponse] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [showFollowUp, setShowFollowUp] = useState(false);
 
     if (!result) return null;
 
-    // Parse roteiro steps
     const parseRoteiro = (text: string) => {
         const rawText = String(text || '');
         const stepPattern = /(?:Passo\s*\d+[:\.]?\s*|^\d+[:\.\)]\s*)/gi;
@@ -46,37 +45,23 @@ export function ScriptResultDisplay({ result, userPlan, handleRefine, onReset }:
     const roteiroSteps = parseRoteiro(result.roteiro_conversa);
     const followUps = Array.isArray(result.follow_up) ? result.follow_up : [];
 
-    // Get current message to show
     const getCurrentMessage = () => {
-        if (currentStep === 0) {
-            return result.mensagem_abertura;
-        }
-        if (currentStep <= roteiroSteps.length) {
-            return roteiroSteps[currentStep - 1]?.content || '';
-        }
+        if (currentStep === 0) return result.mensagem_abertura;
+        if (currentStep <= roteiroSteps.length) return roteiroSteps[currentStep - 1]?.content || '';
         return null;
     };
 
-    // Handle when lead responds
     const handleLeadResponded = async () => {
         if (!leadResponse.trim() || !handleRefine) return;
-
         setIsGenerating(true);
 
-        // Add lead's message to conversation
-        const newConvo = [...conversation, {
-            type: 'lead' as const,
-            content: leadResponse,
-            timestamp: new Date()
-        }];
+        const newConvo = [...conversation, { type: 'lead' as const, content: leadResponse, timestamp: new Date() }];
         setConversation(newConvo);
 
-        // Generate AI response based on lead's message
         const instruction = `O lead respondeu: "${leadResponse}". 
-Contexto do produto: ${result.nome_projeto || 'Script de vendas'}
+Contexto: ${result.nome_projeto || 'Script de vendas'}
 Mensagem anterior: ${getCurrentMessage()}
-
-Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lead da venda. Seja natural e direto.`;
+Gere UMA resposta curta e persuasiva para continuar a conversa.`;
 
         try {
             await handleRefine(instruction);
@@ -90,48 +75,40 @@ Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lea
         setShowFollowUp(false);
     };
 
-    // Handle when lead doesn't respond
-    const handleNoResponse = () => {
-        setShowFollowUp(true);
-    };
-
     return (
-        <div className="w-full max-w-3xl mx-auto">
+        <div className="w-full max-w-3xl mx-auto font-sans">
 
-            {/* Header */}
-            <div className="text-center mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    {result.nome_projeto || 'Seu Script de Vendas'}
+            {/* Header - Clean and minimal */}
+            <div className="mb-10">
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
+                    {result.nome_projeto || 'Script de Vendas'}
                 </h2>
-                <p className="text-gray-500 mt-2">Siga o fluxo da conversa com seu lead</p>
+                <p className="text-gray-500 text-sm mt-1">Siga o fluxo da conversa</p>
             </div>
 
             {/* Conversation Flow */}
-            <div className="space-y-4">
+            <div className="space-y-5">
 
                 {/* Opening Message */}
-                <MessageBubble
-                    type="you"
+                <MessageCard
                     step={1}
-                    label="Mensagem de Abertura"
+                    label="Abertura"
                     content={result.mensagem_abertura}
                     isActive={currentStep === 0}
                 />
 
                 {/* Previous conversation */}
                 {conversation.map((msg, i) => (
-                    <MessageBubble
+                    <MessageCard
                         key={i}
                         type={msg.type}
                         content={msg.content}
-                        step={Math.floor(i / 2) + 2}
                     />
                 ))}
 
-                {/* Current AI Response (if beyond first step) */}
+                {/* Current step from roteiro */}
                 {currentStep > 0 && roteiroSteps[currentStep - 1] && !isGenerating && (
-                    <MessageBubble
-                        type="you"
+                    <MessageCard
                         step={currentStep + 1}
                         label={`Passo ${currentStep + 1}`}
                         content={roteiroSteps[currentStep - 1].content}
@@ -139,61 +116,60 @@ Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lea
                     />
                 )}
 
-                {/* Loading state */}
+                {/* Loading */}
                 {isGenerating && (
-                    <div className="flex justify-end">
-                        <div className="bg-indigo-100 rounded-2xl rounded-br-md px-4 py-3 flex items-center gap-2 text-indigo-600">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span className="text-sm">Gerando resposta...</span>
-                        </div>
+                    <div className="flex items-center gap-2 text-gray-400 text-sm py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Gerando resposta...</span>
                     </div>
                 )}
 
-                {/* Decision Point */}
+                {/* Decision Point - Neutral styling */}
                 {!isGenerating && !showFollowUp && (
                     <div className="py-6">
-                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5">
-                            <div className="text-center mb-4">
-                                <span className="text-xl">🤔</span>
-                                <h3 className="font-bold text-gray-800 mt-1">O lead respondeu?</h3>
-                            </div>
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                            <p className="text-center text-gray-600 font-medium mb-5">O lead respondeu?</p>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* YES - Show input */}
-                                <div className="bg-white rounded-xl p-4 border border-green-200">
-                                    <div className="flex items-center gap-2 text-green-600 font-semibold mb-3">
-                                        <CheckCircle className="w-5 h-5" />
-                                        <span>SIM - Cole a resposta:</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* YES */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-2 text-gray-700 font-medium text-sm mb-3">
+                                        <div className="w-5 h-5 rounded-full bg-gray-900 flex items-center justify-center">
+                                            <CheckCircle className="w-3 h-3 text-white" />
+                                        </div>
+                                        SIM - Cole a resposta
                                     </div>
                                     <textarea
                                         value={leadResponse}
                                         onChange={(e) => setLeadResponse(e.target.value)}
-                                        placeholder="Cole aqui o que o lead respondeu..."
-                                        className="w-full bg-green-50 border border-green-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-300"
+                                        placeholder="Cole o que o lead respondeu..."
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gray-300 placeholder:text-gray-400"
                                         rows={3}
                                     />
                                     <button
                                         onClick={handleLeadResponded}
                                         disabled={!leadResponse.trim() || isGenerating}
-                                        className="w-full mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors"
+                                        className="w-full mt-3 flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-lg transition-colors"
                                     >
                                         <Send className="w-4 h-4" />
                                         Gerar Resposta
                                     </button>
                                 </div>
 
-                                {/* NO - Show follow-up option */}
-                                <div className="bg-white rounded-xl p-4 border border-red-200">
-                                    <div className="flex items-center gap-2 text-red-600 font-semibold mb-3">
-                                        <XCircle className="w-5 h-5" />
-                                        <span>NÃO respondeu</span>
+                                {/* NO */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-2 text-gray-700 font-medium text-sm mb-3">
+                                        <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center">
+                                            <XCircle className="w-3 h-3 text-white" />
+                                        </div>
+                                        NÃO respondeu
                                     </div>
                                     <p className="text-sm text-gray-500 mb-4">
-                                        Sem resposta? Use um follow-up para reativar o lead.
+                                        Use um follow-up para reengajar o lead.
                                     </p>
                                     <button
-                                        onClick={handleNoResponse}
-                                        className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
+                                        onClick={() => setShowFollowUp(true)}
+                                        className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium py-2.5 rounded-lg transition-colors"
                                     >
                                         <Clock className="w-4 h-4" />
                                         Ver Follow-ups
@@ -206,67 +182,62 @@ Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lea
 
                 {/* Follow-up Section */}
                 {showFollowUp && (
-                    <div className="py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Clock className="w-5 h-5 text-red-500" />
-                                <h3 className="font-bold text-red-800">Follow-ups</h3>
-                                <span className="text-xs text-red-500">• Envie se o lead não responder</span>
+                    <div className="py-4 animate-in fade-in duration-300">
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <span className="font-medium text-gray-700 text-sm">Follow-ups</span>
+                                </div>
+                                <button onClick={() => setShowFollowUp(false)} className="text-xs text-gray-500 hover:text-gray-700">
+                                    ← Voltar
+                                </button>
                             </div>
 
                             <div className="space-y-3">
                                 {followUps.length > 0 ? followUps.map((msg: string, i: number) => (
-                                    <div key={i} className="bg-white rounded-xl p-4 border border-red-100">
+                                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-semibold text-red-600">
-                                                Follow-up {i + 1} • Após {(i + 1) * 24}h
+                                            <span className="text-xs font-medium text-gray-500">
+                                                Após {(i + 1) * 24}h
                                             </span>
-                                            <div className="flex items-center gap-2">
-                                                <WhatsAppButton text={msg} small />
-                                                <CopyButton text={msg} className="bg-red-50 hover:bg-red-100 text-red-600 p-1.5 rounded-lg" />
+                                            <div className="flex items-center gap-1">
+                                                <CopyButton text={msg} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" />
                                             </div>
                                         </div>
                                         <p className="text-gray-700 text-sm">{msg}</p>
                                     </div>
                                 )) : (
-                                    <p className="text-gray-500 text-sm italic">Nenhum follow-up gerado</p>
+                                    <p className="text-gray-400 text-sm">Nenhum follow-up disponível</p>
                                 )}
                             </div>
-
-                            <button
-                                onClick={() => setShowFollowUp(false)}
-                                className="w-full mt-4 text-sm text-red-600 hover:text-red-800 font-medium"
-                            >
-                                ← Voltar ao fluxo
-                            </button>
                         </div>
                     </div>
                 )}
 
-                {/* Objections - Quick Access */}
+                {/* Objections - Minimal styling */}
                 {result.respostas_objecoes && Object.keys(result.respostas_objecoes).length > 0 && (
-                    <div className="mt-8 bg-orange-50 border border-orange-200 rounded-2xl p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="text-xl">🛡️</span>
-                            <h3 className="font-bold text-orange-800">Respostas para Objeções</h3>
-                        </div>
+                    <div className="mt-10 pt-8 border-t border-gray-100">
+                        <h3 className="font-medium text-gray-700 text-sm mb-4">Respostas para Objeções</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {Object.entries(result.respostas_objecoes).slice(0, userPlan === 'free' ? 3 : undefined).map(([key, value], i) => (
-                                <div key={key} className="bg-white rounded-lg p-3 border border-orange-100 group">
-                                    <h4 className="text-xs font-bold text-orange-700 uppercase mb-1">"{key.replace(/_/g, ' ')}"</h4>
+                                <div key={key} className="bg-gray-50 border border-gray-100 rounded-lg p-4 group hover:border-gray-200 transition-colors">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">"{key.replace(/_/g, ' ')}"</span>
+                                        <CopyButton text={value as string} className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded transition-opacity" />
+                                    </div>
                                     <p className="text-sm text-gray-700">{value as string}</p>
-                                    <CopyButton text={value as string} className="mt-2 opacity-0 group-hover:opacity-100 bg-orange-50 hover:bg-orange-100 text-orange-600 p-1 rounded text-xs transition-opacity" />
                                 </div>
                             ))}
                             {userPlan === 'free' && Object.keys(result.respostas_objecoes).length > 3 && (
                                 <div
                                     onClick={() => router.push('/dashboard/billing')}
-                                    className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-3 border border-orange-200 flex items-center justify-center cursor-pointer hover:shadow-md transition-shadow"
+                                    className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
                                 >
                                     <div className="text-center">
-                                        <Zap className="w-6 h-6 text-orange-500 mx-auto mb-1" />
-                                        <span className="text-sm font-medium text-orange-700">+{Object.keys(result.respostas_objecoes).length - 3} objeções</span>
-                                        <p className="text-xs text-orange-500">Upgrade Pro</p>
+                                        <Zap className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                                        <span className="text-sm text-gray-500">+{Object.keys(result.respostas_objecoes).length - 3} objeções</span>
+                                        <p className="text-xs text-gray-400">Upgrade</p>
                                     </div>
                                 </div>
                             )}
@@ -278,13 +249,13 @@ Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lea
 
             {/* New Script Button */}
             {onReset && (
-                <div className="flex justify-center pt-10 pb-4">
+                <div className="flex justify-center pt-12">
                     <button
                         onClick={onReset}
-                        className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                        <Plus className="w-5 h-5" />
-                        Criar Novo Script
+                        <Plus className="w-4 h-4" />
+                        Novo Script
                     </button>
                 </div>
             )}
@@ -293,58 +264,66 @@ Gere UMA resposta curta e persuasiva para continuar a conversa e aproximar o lea
     );
 }
 
-// ========== MESSAGE BUBBLE ==========
-interface MessageBubbleProps {
-    type: 'you' | 'lead' | 'system';
+// ========== MESSAGE CARD - Clean & Minimal ==========
+interface MessageCardProps {
+    type?: 'you' | 'lead';
     content: string;
     step?: number;
     label?: string;
     isActive?: boolean;
 }
 
-function MessageBubble({ type, content, step, label, isActive }: MessageBubbleProps) {
-    const isYou = type === 'you';
+function MessageCard({ type = 'you', content, step, label, isActive }: MessageCardProps) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(content);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const isLead = type === 'lead';
 
     return (
-        <div className={`flex ${isYou ? 'justify-end' : 'justify-start'} animate-in fade-in duration-300`}>
-            <div className={`max-w-[85%] ${isYou ? 'order-2' : 'order-1'}`}>
-                {label && (
-                    <div className={`text-xs font-semibold mb-1 ${isYou ? 'text-right text-indigo-600' : 'text-left text-gray-500'}`}>
-                        {step && <span className="bg-indigo-500 text-white w-5 h-5 inline-flex items-center justify-center rounded-full text-[10px] mr-1">{step}</span>}
-                        {label}
+        <div className={`${isLead ? 'pl-8' : ''}`}>
+            {label && (
+                <div className="flex items-center gap-2 mb-2">
+                    {step && (
+                        <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-medium flex items-center justify-center">
+                            {step}
+                        </span>
+                    )}
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+                </div>
+            )}
+            <div className={`
+                rounded-xl p-4 border
+                ${isLead
+                    ? 'bg-gray-100 border-gray-200 text-gray-600'
+                    : `bg-white border-gray-200 ${isActive ? 'ring-1 ring-gray-900 ring-offset-1' : ''}`
+                }
+            `}>
+                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+
+                {!isLead && (
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                        <button
+                            onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(content)}`, '_blank')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
+                        >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            WhatsApp
+                        </button>
+                        <button
+                            onClick={handleCopy}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
+                        >
+                            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copied ? 'Copiado' : 'Copiar'}
+                        </button>
                     </div>
                 )}
-                <div className={`
-                    rounded-2xl px-4 py-3 shadow-sm
-                    ${isYou
-                        ? `bg-indigo-500 text-white rounded-br-md ${isActive ? 'ring-2 ring-indigo-300 ring-offset-2' : ''}`
-                        : 'bg-gray-100 text-gray-800 rounded-bl-md'
-                    }
-                `}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
-                </div>
-                <div className={`flex items-center gap-2 mt-1 ${isYou ? 'justify-end' : 'justify-start'}`}>
-                    {isYou && (
-                        <>
-                            <WhatsAppButton text={content} small />
-                            <CopyButton text={content} className={`p-1 rounded ${isYou ? 'bg-indigo-100 hover:bg-indigo-200 text-indigo-600' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`} />
-                        </>
-                    )}
-                </div>
             </div>
         </div>
-    );
-}
-
-// ========== WHATSAPP BUTTON ==========
-function WhatsAppButton({ text, small }: { text: string; small?: boolean }) {
-    return (
-        <button
-            onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')}
-            className={`flex items-center gap-1 ${small ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium transition-colors`}
-        >
-            <MessageSquare className={small ? 'w-3 h-3' : 'w-4 h-4'} />
-            <span>WhatsApp</span>
-        </button>
     );
 }
