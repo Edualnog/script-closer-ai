@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, AlertCircle, ArrowLeft, CheckCircle2, MessageSquare, Wand2, Zap } from 'lucide-react'
+import { Loader2, AlertCircle, ArrowLeft, CheckCircle2, MessageSquare, Wand2, Zap, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
@@ -206,6 +206,11 @@ export default function GeneratePage() {
                 <button onClick={() => handleRefine('Seja mais amigável, empático e focado em relacionamento ("Soft Sell").')} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium hover:bg-green-100 transition-colors">
                     <MessageSquare className="w-3 h-3" /> Mais Amigável
                 </button>
+            </div>
+
+            {/* Scroll Indicator */}
+            <div className="flex justify-center mb-6 animate-bounce">
+                <ChevronDown className="w-6 h-6 text-gray-400 opacity-75" />
             </div>
 
             {/* Results Display */}
