@@ -23,6 +23,8 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
     const [leadResponse, setLeadResponse] = useState('');
     const [isGeneratingLocal, setIsGeneratingLocal] = useState(false);
     const [showFollowUp, setShowFollowUp] = useState(false);
+    const [dynamicFollowUps, setDynamicFollowUps] = useState<Array<{ timing: string; message: string }> | null>(null);
+    const [isLoadingFollowUps, setIsLoadingFollowUps] = useState(false);
 
     if (!result) return null;
 
@@ -37,7 +39,36 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
     };
 
     const roteiroSteps = parseRoteiro(result.roteiro_conversa);
-    const followUps = Array.isArray(result.follow_up) ? result.follow_up : [];
+
+    // Handler to generate dynamic follow-ups
+    const handleShowFollowUps = async () => {
+        setShowFollowUp(true);
+
+        // If we already have dynamic follow-ups, don't regenerate
+        if (dynamicFollowUps) return;
+
+        setIsLoadingFollowUps(true);
+        try {
+            const response = await fetch('/api/generate-followups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productName: result.nome_projeto || 'Produto',
+                    productDescription: result.mensagem_abertura,
+                    openingMessage: result.mensagem_abertura,
+                    conversationHistory
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setDynamicFollowUps(data.followups || []);
+            }
+        } catch (error) {
+            console.error('Error generating follow-ups:', error);
+        }
+        setIsLoadingFollowUps(false);
+    };
 
     // Build all items - keeps existing script and appends conversation
     const buildFlowItems = () => {
@@ -179,11 +210,11 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                                     </div>
                                     <p className="text-sm text-gray-500 mb-3">Use um follow-up</p>
                                     <button
-                                        onClick={() => setShowFollowUp(true)}
+                                        onClick={handleShowFollowUps}
                                         className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-medium py-2 rounded-lg transition-colors"
                                     >
                                         <Clock className="w-4 h-4" />
-                                        Follow-ups
+                                        Gerar Follow-ups
                                     </button>
                                 </div>
                             </div>
@@ -191,25 +222,35 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                     </div>
                 )}
 
-                {/* Follow-ups */}
+                {/* Follow-ups - Dynamic */}
                 {showFollowUp && (
                     <div className="mt-6 animate-in fade-in">
                         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="font-medium text-gray-700 text-sm">Follow-ups</span>
+                                <span className="font-medium text-gray-700 text-sm">Follow-ups Personalizados</span>
                                 <button onClick={() => setShowFollowUp(false)} className="text-xs text-gray-500 hover:text-gray-700">← Voltar</button>
                             </div>
-                            <div className="space-y-3">
-                                {followUps.map((msg: string, i: number) => (
-                                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between gap-3">
-                                        <div>
-                                            <span className="text-xs text-gray-500">Após {(i + 1) * 24}h</span>
-                                            <p className="text-gray-700 text-sm mt-1">{msg}</p>
+
+                            {isLoadingFollowUps ? (
+                                <div className="text-center py-6">
+                                    <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-500">Gerando follow-ups personalizados...</p>
+                                </div>
+                            ) : dynamicFollowUps && dynamicFollowUps.length > 0 ? (
+                                <div className="space-y-3">
+                                    {dynamicFollowUps.map((fu, i) => (
+                                        <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between gap-3">
+                                            <div>
+                                                <span className="text-xs text-gray-500">Após {fu.timing}</span>
+                                                <p className="text-gray-700 text-sm mt-1">{fu.message}</p>
+                                            </div>
+                                            <CopyBtn text={fu.message} />
                                         </div>
-                                        <CopyBtn text={msg} />
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-400 text-sm text-center py-4">Clique para gerar follow-ups</p>
+                            )}
                         </div>
                     </div>
                 )}

@@ -189,3 +189,72 @@ export async function generateSalesScript(input: GenerateScriptInput) {
     throw new Error("Failed to parse AI response JSON");
   }
 }
+
+// New function: Generate dynamic follow-ups based on conversation context
+export interface GenerateFollowUpsInput {
+  productName: string;
+  productDescription: string;
+  conversationHistory: Array<{ type: 'you' | 'lead'; content: string }>;
+  lastMessageTime?: string; // ISO timestamp
+}
+
+export async function generateFollowUps(input: GenerateFollowUpsInput) {
+  const openai = new OpenAI()
+
+  const conversationSummary = input.conversationHistory.length > 0
+    ? input.conversationHistory.map((msg, i) =>
+      `${msg.type === 'you' ? 'Você' : 'Lead'}: "${msg.content}"`
+    ).join('\n')
+    : 'Nenhuma conversa ainda (lead não respondeu à abertura)';
+
+  const systemPrompt = `
+    Você é um especialista em vendas via WhatsApp.
+    
+    CONTEXTO:
+    - Produto: ${input.productName}
+    - Descrição: ${input.productDescription}
+    - Histórico da conversa:
+    ${conversationSummary}
+    
+    OBJETIVO:
+    Gere 3 mensagens de follow-up PERSONALIZADAS para reengajar este lead específico.
+    Cada mensagem deve ser progressivamente mais direta mas sempre respeitosa.
+    
+    REGRAS:
+    - Mensagem 1 (24h depois): Leve, curiosidade, retomar assunto específico da conversa
+    - Mensagem 2 (48h depois): Agregar valor, enviar dica/insight relacionado
+    - Mensagem 3 (72h depois): Último contato, oferecer ajuda ou encerrar cordialmente
+    
+    - Use o CONTEXTO da conversa - mencione algo específico que foi discutido
+    - Seja natural, não robótico
+    - Mensagens curtas (2-3 linhas máximo)
+    - Termine com pergunta quando possível
+    
+    FORMATO DE SAÍDA (JSON obrigatório):
+    {
+      "followups": [
+        { "timing": "24h", "message": "texto da mensagem 1" },
+        { "timing": "48h", "message": "texto da mensagem 2" },
+        { "timing": "72h", "message": "texto da mensagem 3" }
+      ]
+    }
+  `;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: "Gere os follow-ups personalizados para este contexto." }
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.7,
+  })
+
+  const content = response.choices[0].message.content
+  if (!content) {
+    throw new Error('Falha ao gerar follow-ups')
+  }
+
+  return JSON.parse(content)
+}
+
