@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageSquare, CheckCircle, XCircle, Send, Plus, Zap, Clock, Loader2, Copy, Check, ArrowDown } from 'lucide-react'
+import { MessageSquare, CheckCircle, XCircle, Send, Plus, Clock, Loader2, Copy, Check, ArrowDown, AlertTriangle } from 'lucide-react'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
 
@@ -94,6 +94,13 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
 
         return items;
     };
+
+    // Detect negative responses (2 or more)
+    const negativePatterns = ['não quero', 'nao quero', 'não tenho interesse', 'nao tenho interesse', 'não preciso', 'nao preciso', 'desculpa', 'obrigado mas', 'não obrigado', 'nao obrigado', 'deixa pra lá', 'deixa pra la', 'não é pra mim', 'nao e pra mim', 'não me interessa', 'nao me interessa'];
+    const negativeCount = conversationHistory.filter(msg =>
+        msg.type === 'lead' && negativePatterns.some(pattern => msg.content.toLowerCase().includes(pattern))
+    ).length;
+    const showWarning = negativeCount >= 2;
 
     const handleLeadResponded = () => {
         if (!leadResponse.trim()) return;
@@ -218,6 +225,19 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Warning after 2 negative responses */}
+                            {showWarning && (
+                                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-amber-800">Aviso</p>
+                                        <p className="text-sm text-amber-700 mt-1">
+                                            O lead demonstrou desinteresse 2 vezes. Considere tentar uma abordagem diferente ou encerrar cordialmente para não forçar demais.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -255,30 +275,6 @@ export function ScriptResultDisplay({ result, userPlan, onReset }: ScriptResultD
                     </div>
                 )}
             </div>
-
-            {/* Objections */}
-            {result.respostas_objecoes && Object.keys(result.respostas_objecoes).length > 0 && (
-                <div className="mt-12 pt-8 border-t border-gray-100">
-                    <h3 className="font-medium text-gray-700 text-sm mb-4">Objeções</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {Object.entries(result.respostas_objecoes).slice(0, userPlan === 'free' ? 3 : undefined).map(([key, value]) => (
-                            <div key={key} className="bg-gray-50 border border-gray-100 rounded-lg p-4 group hover:border-gray-200">
-                                <span className="text-xs font-medium text-gray-500 uppercase">"{key.replace(/_/g, ' ')}"</span>
-                                <p className="text-sm text-gray-700 mt-1">{value as string}</p>
-                                <CopyBtn text={value as string} className="mt-2 opacity-0 group-hover:opacity-100" />
-                            </div>
-                        ))}
-                        {userPlan === 'free' && Object.keys(result.respostas_objecoes).length > 3 && (
-                            <div onClick={() => router.push('/dashboard/billing')} className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-4 flex items-center justify-center cursor-pointer hover:bg-gray-100">
-                                <div className="text-center">
-                                    <Zap className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                                    <span className="text-sm text-gray-500">+{Object.keys(result.respostas_objecoes).length - 3}</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {/* New Script */}
             {onReset && (
