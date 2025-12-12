@@ -28,14 +28,24 @@ export default function GeneratePage() {
             const pendingData = localStorage.getItem('pending_script_generation');
 
             if (!pendingData) {
-                // No intent found, redirect to command center
                 router.replace('/app');
                 return;
             }
 
             try {
                 const parsed = JSON.parse(pendingData);
-                await generateScript(parsed);
+
+                // CHECK CACHE: Prevent re-generation on refresh
+                const cachedKey = `script_result_${parsed.timestamp}`;
+                const cached = sessionStorage.getItem(cachedKey);
+
+                if (cached) {
+                    console.log("Using cached result");
+                    setResult(JSON.parse(cached));
+                    setLoading(false);
+                } else {
+                    await generateScript(parsed);
+                }
             } catch (e) {
                 console.error("Failed to parse data", e);
                 setError("Erro ao processar dados da tarefa.");
@@ -84,6 +94,11 @@ export default function GeneratePage() {
             }
 
             setResult(responseData.result);
+
+            // CACHE RESULT: Save to session storage to persist on refresh
+            if (data.timestamp) {
+                sessionStorage.setItem(`script_result_${data.timestamp}`, JSON.stringify(responseData.result));
+            }
 
             // Optimistic Update: Notify Sidebar immediately
             if (responseData.productId) {

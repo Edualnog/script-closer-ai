@@ -132,7 +132,9 @@ export function AICommandCenter({ initialContext }: AICommandCenterProps) {
 
         const payload = {
             mode: activeMode,
-            name: activeMode === 'script' ? 'Novo Script' : 'Resposta ao Lead',
+            name: activeMode === 'script'
+                ? (description.length > 30 ? description.substring(0, 30) + '...' : description)
+                : 'Resposta ao Lead',
             description, // For lead_response, this is the message. For script, this is the product.
             // If responding, we pass the active product context
             productContext: activeMode === 'lead_response' ? activeProduct : null,
