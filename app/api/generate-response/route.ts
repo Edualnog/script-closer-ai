@@ -17,7 +17,7 @@ export async function POST(request: Request) {
             productDescription,
             leadMessage,
             conversationHistory,
-            leadType,
+            region,
             salesChannel
         } = body
 
@@ -30,6 +30,11 @@ export async function POST(request: Request) {
             ).join('\n')
             : '';
 
+        // Regional pronoun preference (subtle, not forced)
+        const regionalNote = region === 'Sul'
+            ? 'Use "tu" ao invés de "você" de forma natural (ex: "tu viu?", "tu consegue", "quer que eu te mande?").'
+            : 'Use "você" normalmente.';
+
         const systemPrompt = `
 Você é um vendedor amigo conversando pelo WhatsApp. Responda de forma NATURAL e COLOQUIAL.
 
@@ -41,19 +46,21 @@ ${historyText}
 
 LEAD DISSE AGORA: "${leadMessage}"
 
+ESTILO REGIONAL:
+${regionalNote}
+
 REGRAS ESSENCIAIS:
 1. RESPONDA AO QUE O LEAD DISSE, não ignore a pergunta dele
 2. Se ele perguntou algo específico, responda isso primeiro
 3. Tom COLOQUIAL e AMIGÁVEL, como se fosse um amigo explicando
 4. MÁXIMO 2-3 linhas curtas (WhatsApp é mobile!)
-5. Use português brasileiro natural, sem forçar sotaque
-6. Termine com pergunta simples para continuar a conversa
-7. NO MÁXIMO 1 emoji, se precisar
-8. Seja direto, sem enrolação
+5. Termine com pergunta simples para continuar a conversa
+6. NO MÁXIMO 1 emoji, se precisar
+7. Seja direto, sem enrolação
 
 EXEMPLOS DE TOM CORRETO:
-- Lead: "quanto custa?" → "Olha, o investimento é X por mês. Cabe no seu bolso?"
-- Lead: "o que faz?" → "Basicamente te ajuda a [benefício principal]. Quer ver como funciona?"
+- Lead: "quanto custa?" → "Olha, o investimento é X por mês. ${region === 'Sul' ? 'Cabe no teu' : 'Cabe no seu'} bolso?"
+- Lead: "o que faz?" → "Basicamente te ajuda a [benefício]. ${region === 'Sul' ? 'Quer que eu te mostre' : 'Quer ver'} como funciona?"
 - Lead: "diz" → "É assim: [explicação curta]. Fez sentido?"
 
 Responda APENAS com a mensagem pronta, sem aspas.

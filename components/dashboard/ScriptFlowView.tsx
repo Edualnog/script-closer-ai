@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MessageSquare, CheckCircle, XCircle, Send, Clock, Loader2, Copy, Check, ArrowDown, Sparkles } from 'lucide-react'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,7 @@ interface ScriptFlowViewProps {
         tipo_lead?: string;    // frio, morno, quente
         canal_venda?: string;  // whatsapp, instagram, etc
         regiao?: string;       // Sul, SP, RJ, Nordeste, Neutro
+        conversation_history?: Array<{ type: 'you' | 'lead'; content: string }>; // Saved conversation
     };
     productName: string;
     productId: string;
@@ -28,11 +29,27 @@ interface ConversationItem {
 
 export function ScriptFlowView({ script, productName, productId }: ScriptFlowViewProps) {
     const router = useRouter();
-    const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>([]);
+    const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>(
+        script.conversation_history || []
+    );
     const [leadResponse, setLeadResponse] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [showFollowUp, setShowFollowUp] = useState(false);
     const [generatedResponse, setGeneratedResponse] = useState<string | null>(null);
+
+    // Save conversation whenever it changes
+    useEffect(() => {
+        if (conversationHistory.length > 0) {
+            fetch('/api/save-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scriptId: script.id,
+                    conversationHistory
+                })
+            }).catch(err => console.error('Error saving conversation:', err));
+        }
+    }, [conversationHistory, script.id]);
 
     const parseRoteiro = (text: string) => {
         const rawText = String(text || '');

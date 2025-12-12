@@ -55,12 +55,15 @@ create table public.scripts (
   product_id uuid references public.products(id) on delete cascade not null,
   tipo_lead text, -- frio, morno, quente
   canal_venda text, -- whatsapp, instagram, etc
+  regiao text, -- Sul, SP, RJ, Nordeste, Neutro
   mensagem_abertura text,
   roteiro_conversa text,
   respostas_objecoes jsonb, 
   follow_up jsonb,
+  conversation_history jsonb, -- Saved conversation flow
   modelo_usado text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table public.scripts enable row level security;
