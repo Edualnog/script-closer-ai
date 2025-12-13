@@ -1,12 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users, FileText, Smartphone } from 'lucide-react'
+import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users, FileText, Smartphone, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
-import { WhatsAppConnect } from './WhatsAppConnect'
+import { WhatsAppConnect, useWhatsApp } from './WhatsAppConnect'
 
 interface SidebarContentProps {
     className?: string;
@@ -20,6 +20,12 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
     const [projects, setProjects] = useState<any[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [showWhatsApp, setShowWhatsApp] = useState(false)
+    const { isConnected, checkConnection } = useWhatsApp()
+
+    // Check WhatsApp connection status on mount and when modal closes
+    useEffect(() => {
+        checkConnection()
+    }, [showWhatsApp])
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -145,10 +151,24 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
             {/* WhatsApp Connect Button */}
             <button
                 onClick={() => setShowWhatsApp(true)}
-                className="mx-2 mb-4 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors text-green-600 hover:bg-green-50 border border-green-200"
+                className={cn(
+                    "mx-2 mb-4 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isConnected
+                        ? "bg-green-500 text-white hover:bg-green-600"
+                        : "text-green-600 hover:bg-green-50 border border-green-200"
+                )}
             >
-                <Smartphone className="w-4 h-4" />
-                <span>Conectar WhatsApp</span>
+                {isConnected ? (
+                    <>
+                        <Check className="w-4 h-4" />
+                        <span>WhatsApp Conectado</span>
+                    </>
+                ) : (
+                    <>
+                        <Smartphone className="w-4 h-4" />
+                        <span>Conectar WhatsApp</span>
+                    </>
+                )}
             </button>
 
             {/* WhatsApp Modal */}

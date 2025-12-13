@@ -26,6 +26,7 @@ export function WhatsAppConnect({ isOpen, onClose }: WhatsAppConnectProps) {
             const res = await fetch('/api/whatsapp')
             if (res.ok) {
                 const data = await res.json()
+                console.log('[WhatsApp] Status:', data)
                 setState(data)
                 return data.status
             }
@@ -38,6 +39,7 @@ export function WhatsAppConnect({ isOpen, onClose }: WhatsAppConnectProps) {
     // Start connection
     const connect = async () => {
         setLoading(true)
+        setPolling(true) // Start polling immediately
         try {
             const res = await fetch('/api/whatsapp', {
                 method: 'POST',
@@ -46,11 +48,12 @@ export function WhatsAppConnect({ isOpen, onClose }: WhatsAppConnectProps) {
             })
             if (res.ok) {
                 const data = await res.json()
+                console.log('[WhatsApp] Connect response:', data)
                 setState(data)
-                setPolling(true)
             }
         } catch (error) {
             console.error('Error connecting:', error)
+            setPolling(false)
         } finally {
             setLoading(false)
         }
@@ -59,6 +62,7 @@ export function WhatsAppConnect({ isOpen, onClose }: WhatsAppConnectProps) {
     // Disconnect
     const disconnect = async () => {
         setLoading(true)
+        setPolling(false)
         try {
             await fetch('/api/whatsapp', {
                 method: 'POST',
@@ -73,18 +77,25 @@ export function WhatsAppConnect({ isOpen, onClose }: WhatsAppConnectProps) {
         }
     }
 
-    // Poll for status updates when connecting/QR
+    // Poll for status updates - faster polling (1 second)
     useEffect(() => {
         if (!polling || !isOpen) return
 
+        console.log('[WhatsApp] Polling started')
+
         const interval = setInterval(async () => {
             const status = await fetchStatus()
-            if (status === 'connected' || status === 'disconnected') {
+            console.log('[WhatsApp] Poll result:', status)
+            if (status === 'connected') {
+                console.log('[WhatsApp] Connected! Stopping poll')
                 setPolling(false)
             }
-        }, 2000)
+        }, 1000) // Poll every 1 second
 
-        return () => clearInterval(interval)
+        return () => {
+            console.log('[WhatsApp] Polling stopped')
+            clearInterval(interval)
+        }
     }, [polling, isOpen, fetchStatus])
 
     // Fetch initial status when modal opens
