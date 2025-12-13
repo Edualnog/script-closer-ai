@@ -313,28 +313,37 @@ declare global {
     var __whatsappManager: WhatsAppManager | undefined
 }
 
+// Check if existing manager has onMessage method, if not recreate
+let manager = globalThis.__whatsappManager
+if (!manager || typeof manager.onMessage !== 'function') {
+    console.log('[WhatsApp] Creating new WhatsAppManager instance')
+    manager = new WhatsAppManager()
+    globalThis.__whatsappManager = manager
+}
+
 // Use globalThis to persist across module reloads in development
-export const whatsappManager = globalThis.__whatsappManager || new WhatsAppManager()
-globalThis.__whatsappManager = whatsappManager
+export const whatsappManager = manager
 
-// Register message callback to save incoming messages
-whatsappManager.onMessage(async (message) => {
-    console.log('[WhatsApp Callback] Incoming message, calling API to save...')
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-        const response = await fetch(`${baseUrl}/api/whatsapp/incoming`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(message)
-        })
+// Register message callback to save incoming messages (only if not already registered)
+if (typeof whatsappManager.onMessage === 'function') {
+    whatsappManager.onMessage(async (message) => {
+        console.log('[WhatsApp Callback] Incoming message, calling API to save...')
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+            const response = await fetch(`${baseUrl}/api/whatsapp/incoming`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            })
 
-        if (response.ok) {
-            const result = await response.json()
-            console.log('[WhatsApp Callback] Message saved:', result.success ? result.leadName : 'Lead not found')
-        } else {
-            console.error('[WhatsApp Callback] API error:', response.status)
+            if (response.ok) {
+                const result = await response.json()
+                console.log('[WhatsApp Callback] Message saved:', result.success ? result.leadName : 'Lead not found')
+            } else {
+                console.error('[WhatsApp Callback] API error:', response.status)
+            }
+        } catch (error) {
+            console.error('[WhatsApp Callback] Error calling API:', error)
         }
-    } catch (error) {
-        console.error('[WhatsApp Callback] Error calling API:', error)
-    }
-})
+    })
+}
