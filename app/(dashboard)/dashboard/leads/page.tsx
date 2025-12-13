@@ -151,7 +151,7 @@ export default function LeadsPage() {
         reader.readAsText(file)
     }
 
-    // Open WhatsApp with lead contact
+    // Open WhatsApp with lead contact (auto-add Brazil code)
     const openWhatsApp = (lead: Lead) => {
         if (!lead.contato) {
             alert('Este lead não tem contato cadastrado')
@@ -159,7 +159,13 @@ export default function LeadsPage() {
         }
 
         // Clean phone number (remove non-digits)
-        const phone = lead.contato.replace(/\D/g, '')
+        let phone = lead.contato.replace(/\D/g, '')
+
+        // Add Brazil country code if not present
+        if (!phone.startsWith('55')) {
+            phone = '55' + phone
+        }
+
         const url = `https://wa.me/${phone}`
         window.open(url, '_blank')
     }
