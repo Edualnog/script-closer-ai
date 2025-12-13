@@ -16,10 +16,25 @@ export interface WhatsAppState {
     phoneNumber?: string
 }
 
+export interface IncomingMessage {
+    userId: string
+    from: string
+    text: string
+    timestamp: string
+    messageId: string
+}
+
+// Callback type for message handler
+export type MessageCallback = (message: IncomingMessage) => Promise<void>
+
+// Store pending messages for leads not yet matched
+const pendingMessages: Map<string, IncomingMessage[]> = new Map()
+
 class WhatsAppManager extends EventEmitter {
     private sockets: Map<string, WASocket> = new Map()
     private states: Map<string, WhatsAppState> = new Map()
     private authDir = path.join(process.cwd(), '.whatsapp-sessions')
+    private messageCallback: MessageCallback | null = null
 
     constructor() {
         super()
@@ -27,6 +42,11 @@ class WhatsAppManager extends EventEmitter {
         if (!fs.existsSync(this.authDir)) {
             fs.mkdirSync(this.authDir, { recursive: true })
         }
+    }
+
+    // Register callback for incoming messages
+    onMessage(callback: MessageCallback) {
+        this.messageCallback = callback
     }
 
     getState(userId: string): WhatsAppState {
@@ -93,6 +113,64 @@ class WhatsAppManager extends EventEmitter {
                     phoneNumber
                 })
                 this.emit('state', userId, this.states.get(userId))
+            }
+        })
+
+        // Listen for incoming messages
+        sock.ev.on('messages.upsert', async ({ messages, type }) => {
+            if (type !== 'notify') return // Only process new messages
+
+            for (const msg of messages) {
+                // Skip our own messages
+                if (msg.key.fromMe) continue
+
+                // Skip if no message content
+                if (!msg.message) continue
+
+                // Get sender phone number (remove @s.whatsapp.net)
+                const senderJid = msg.key.remoteJid || ''
+                const senderPhone = senderJid.replace('@s.whatsapp.net', '')
+
+                // Extract message text
+                let text = ''
+                if (msg.message.conversation) {
+                    text = msg.message.conversation
+                } else if (msg.message.extendedTextMessage?.text) {
+                    text = msg.message.extendedTextMessage.text
+                } else if (msg.message.imageMessage?.caption) {
+                    text = '[Imagem] ' + (msg.message.imageMessage.caption || '')
+                } else if (msg.message.videoMessage?.caption) {
+                    text = '[Vídeo] ' + (msg.message.videoMessage.caption || '')
+                } else if (msg.message.documentMessage?.fileName) {
+                    text = '[Documento] ' + msg.message.documentMessage.fileName
+                } else if (msg.message.audioMessage) {
+                    text = '[Áudio]'
+                } else {
+                    text = '[Mídia]'
+                }
+
+                console.log('[WhatsApp] Received message from:', senderPhone, 'Text:', text)
+
+                // Create message object
+                const incomingMessage: IncomingMessage = {
+                    userId,
+                    from: senderPhone,
+                    text: text,
+                    timestamp: new Date(msg.messageTimestamp as number * 1000).toISOString(),
+                    messageId: msg.key.id || ''
+                }
+
+                // Call registered callback if exists
+                if (this.messageCallback) {
+                    try {
+                        await this.messageCallback(incomingMessage)
+                    } catch (error) {
+                        console.error('[WhatsApp] Error in message callback:', error)
+                    }
+                }
+
+                // Also emit event for other listeners
+                this.emit('message', userId, incomingMessage)
             }
         })
     }
@@ -164,3 +242,25 @@ declare global {
 // Use globalThis to persist across module reloads in development
 export const whatsappManager = globalThis.__whatsappManager || new WhatsAppManager()
 globalThis.__whatsappManager = whatsappManager
+
+// Register message callback to save incoming messages
+whatsappManager.onMessage(async (message) => {
+    console.log('[WhatsApp Callback] Incoming message, calling API to save...')
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        const response = await fetch(`${baseUrl}/api/whatsapp/incoming`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(message)
+        })
+
+        if (response.ok) {
+            const result = await response.json()
+            console.log('[WhatsApp Callback] Message saved:', result.success ? result.leadName : 'Lead not found')
+        } else {
+            console.error('[WhatsApp Callback] API error:', response.status)
+        }
+    } catch (error) {
+        console.error('[WhatsApp Callback] Error calling API:', error)
+    }
+})
