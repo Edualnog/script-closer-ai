@@ -49,12 +49,22 @@ export async function POST(request: Request) {
         }
 
         if (action === 'send') {
+            console.log('[API WhatsApp] Send action received')
+            console.log('[API WhatsApp] To:', to, 'Message:', message)
+
             if (!to || !message) {
                 return NextResponse.json({ error: 'Destinatário e mensagem são obrigatórios' }, { status: 400 })
             }
 
-            const success = await whatsappManager.sendMessage(user.id, to, message)
-            return NextResponse.json({ success })
+            try {
+                console.log('[API WhatsApp] Calling whatsappManager.sendMessage...')
+                const success = await whatsappManager.sendMessage(user.id, to, message)
+                console.log('[API WhatsApp] Send success:', success)
+                return NextResponse.json({ success })
+            } catch (sendError: any) {
+                console.error('[API WhatsApp] Send error:', sendError)
+                return NextResponse.json({ success: false, error: sendError.message }, { status: 500 })
+            }
         }
 
         return NextResponse.json({ error: 'Ação inválida' }, { status: 400 })

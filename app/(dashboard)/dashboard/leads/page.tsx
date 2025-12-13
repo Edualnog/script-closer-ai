@@ -172,6 +172,7 @@ export default function LeadsPage() {
 
         // Check if WhatsApp is connected
         const connected = await checkConnection()
+        console.log('[Leads] checkConnection result:', connected)
 
         if (connected) {
             // Send directly via API
@@ -257,19 +258,57 @@ export default function LeadsPage() {
         setTimeout(() => setCopied(false), 2000)
     }
 
-    const sendSuggestionWhatsApp = () => {
+    const sendSuggestionWhatsApp = async () => {
         if (!selectedLead?.contato) {
             alert('Este lead não tem contato cadastrado')
             return
         }
 
-        let phone = selectedLead.contato.replace(/\D/g, '')
-        if (!phone.startsWith('55')) {
-            phone = '55' + phone
-        }
+        // Check if WhatsApp is connected
+        const connected = await checkConnection()
+        console.log('[Suggestion] checkConnection result:', connected)
 
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(suggestion)}`
-        window.open(url, '_blank')
+        if (connected && suggestion) {
+            // Send directly via API
+            setSending(selectedLead.id)
+            try {
+                const success = await sendMessage(selectedLead.contato, suggestion)
+
+                if (success) {
+                    alert('✅ Mensagem enviada com sucesso!')
+                    // Add to conversation history
+                    const history = selectedLead.conversation_history || []
+                    await fetch('/api/leads', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: selectedLead.id,
+                            conversation_history: [
+                                ...history,
+                                { type: 'you', content: suggestion, timestamp: new Date().toISOString() }
+                            ]
+                        })
+                    })
+                    fetchLeads()
+                    setSelectedLead(null) // Close modal
+                } else {
+                    alert('❌ Erro ao enviar mensagem')
+                }
+            } catch (error) {
+                console.error('Error sending message:', error)
+                alert('❌ Erro ao enviar mensagem')
+            } finally {
+                setSending(null)
+            }
+        } else {
+            // Fallback to wa.me link
+            let phone = selectedLead.contato.replace(/\D/g, '')
+            if (!phone.startsWith('55')) {
+                phone = '55' + phone
+            }
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(suggestion)}`
+            window.open(url, '_blank')
+        }
     }
 
     // Add message to lead conversation history

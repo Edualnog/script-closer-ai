@@ -108,23 +108,44 @@ class WhatsAppManager extends EventEmitter {
     }
 
     async sendMessage(userId: string, to: string, message: string): Promise<boolean> {
+        console.log('[WhatsApp] sendMessage called for user:', userId)
+        console.log('[WhatsApp] To:', to, 'Message:', message)
+
         const sock = this.sockets.get(userId)
+        console.log('[WhatsApp] Socket exists:', !!sock)
+        console.log('[WhatsApp] Socket user:', sock?.user?.id)
+
         if (!sock || !sock.user) {
+            console.error('[WhatsApp] No socket or user - not connected')
             throw new Error('WhatsApp not connected')
         }
 
         // Format phone number for WhatsApp (remove non-digits, add @s.whatsapp.net)
         let phone = to.replace(/\D/g, '')
-        if (!phone.startsWith('55')) {
+        console.log('[WhatsApp] Original phone after cleanup:', phone)
+
+        // Add Brazil country code if not present
+        // Brazilian numbers: 55 + DDD(2) + 9 + number(8) = 13 digits
+        // Or: 55 + DDD(2) + number(8) = 12 digits (landline)
+        if (phone.length === 11 && !phone.startsWith('55')) {
+            // Format: DDD(2) + 9 + number(8) = 11 digits, add 55
+            phone = '55' + phone
+        } else if (phone.length === 10 && !phone.startsWith('55')) {
+            // Format: DDD(2) + number(8) = 10 digits (old format), add 55 + 9
+            phone = '55' + phone.slice(0, 2) + '9' + phone.slice(2)
+        } else if (!phone.startsWith('55')) {
             phone = '55' + phone
         }
+
         const jid = phone + '@s.whatsapp.net'
+        console.log('[WhatsApp] Final JID:', jid)
 
         try {
-            await sock.sendMessage(jid, { text: message })
+            const result = await sock.sendMessage(jid, { text: message })
+            console.log('[WhatsApp] Send result:', result)
             return true
         } catch (error) {
-            console.error('Error sending message:', error)
+            console.error('[WhatsApp] Error sending message:', error)
             throw error
         }
     }
@@ -135,5 +156,11 @@ class WhatsAppManager extends EventEmitter {
     }
 }
 
-// Singleton instance
-export const whatsappManager = new WhatsAppManager()
+// Extend globalThis to include our manager
+declare global {
+    var __whatsappManager: WhatsAppManager | undefined
+}
+
+// Use globalThis to persist across module reloads in development
+export const whatsappManager = globalThis.__whatsappManager || new WhatsAppManager()
+globalThis.__whatsappManager = whatsappManager

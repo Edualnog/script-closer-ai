@@ -225,14 +225,17 @@ export function useWhatsApp() {
 
     const checkConnection = useCallback(async () => {
         try {
+            console.log('[useWhatsApp] Checking connection...')
             const res = await fetch('/api/whatsapp')
+            console.log('[useWhatsApp] Response status:', res.status)
             if (res.ok) {
                 const data = await res.json()
+                console.log('[useWhatsApp] Response data:', data)
                 setIsConnected(data.status === 'connected')
                 return data.status === 'connected'
             }
         } catch (error) {
-            console.error('Error checking connection:', error)
+            console.error('[useWhatsApp] Error checking connection:', error)
         }
         return false
     }, [])
