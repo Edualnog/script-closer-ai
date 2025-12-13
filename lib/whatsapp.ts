@@ -232,6 +232,80 @@ class WhatsAppManager extends EventEmitter {
         const state = this.states.get(userId)
         return state?.status === 'connected'
     }
+
+    // Get all contacts from WhatsApp
+    // Note: Baileys doesn't provide a direct way to list all contacts
+    // This returns contacts from our internal tracking
+    async getContacts(userId: string): Promise<Array<{ phone: string, name: string }>> {
+        const sock = this.sockets.get(userId)
+        if (!sock || !sock.user) {
+            throw new Error('WhatsApp not connected')
+        }
+
+        // We can't directly list contacts, but we can check if specific numbers exist
+        // For now, return an empty array - contacts will be created from incoming messages
+        console.log('[WhatsApp] getContacts called - contacts are created automatically from messages')
+        return []
+    }
+
+    // Check if a phone number exists on WhatsApp
+    async checkNumber(userId: string, phone: string): Promise<{ exists: boolean, jid?: string }> {
+        const sock = this.sockets.get(userId)
+        if (!sock || !sock.user) {
+            throw new Error('WhatsApp not connected')
+        }
+
+        try {
+            // Format phone number
+            let formattedPhone = phone.replace(/\D/g, '')
+            if (!formattedPhone.startsWith('55')) {
+                formattedPhone = '55' + formattedPhone
+            }
+
+            const result = await sock.onWhatsApp(formattedPhone)
+            if (result && result.length > 0) {
+                return { exists: true, jid: result[0].jid }
+            }
+            return { exists: false }
+        } catch (error) {
+            console.error('[WhatsApp] Error checking number:', error)
+            return { exists: false }
+        }
+    }
+
+    // Get profile picture URL for a contact
+    async getProfilePicture(userId: string, phone: string): Promise<string | null> {
+        const sock = this.sockets.get(userId)
+        if (!sock || !sock.user) {
+            throw new Error('WhatsApp not connected')
+        }
+
+        try {
+            let formattedPhone = phone.replace(/\D/g, '')
+            if (!formattedPhone.startsWith('55')) {
+                formattedPhone = '55' + formattedPhone
+            }
+            const jid = formattedPhone + '@s.whatsapp.net'
+
+            const url = await sock.profilePictureUrl(jid, 'preview')
+            return url || null
+        } catch (error) {
+            // No profile picture or error
+            return null
+        }
+    }
+
+    // Get recent chats - simplified version
+    // Chats will be populated from incoming messages automatically
+    async getRecentChats(userId: string, limit: number = 20): Promise<Array<{
+        phone: string,
+        name: string,
+        messages: Array<{ type: 'you' | 'lead', content: string, timestamp: string }>
+    }>> {
+        console.log('[WhatsApp] getRecentChats called - chats are created automatically from messages')
+        // Return empty - chats are created from incoming messages
+        return []
+    }
 }
 
 // Extend globalThis to include our manager

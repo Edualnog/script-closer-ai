@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         }
 
         // Find matching lead
-        const lead = leads?.find(l => {
+        let lead = leads?.find(l => {
             if (!l.contato) return false
             const leadPhone = l.contato.replace(/\D/g, '')
             return phoneVariations.some(pv =>
@@ -44,12 +44,47 @@ export async function POST(request: Request) {
             )
         })
 
+        // If no lead found, create a new one automatically
         if (!lead) {
-            console.log('[WhatsApp Incoming] Lead not found for phone:', phone)
-            return NextResponse.json({
-                success: false,
-                message: 'Lead not found',
+            console.log('[WhatsApp Incoming] Lead not found for phone:', phone, '- Creating new lead')
+
+            // Try to get contact name from WhatsApp (will be undefined if not available)
+            // For now, use phone number as name
+            const formattedPhone = phone.length === 13 ?
+                `${phone.slice(2, 4)} ${phone.slice(4)}` : // Format: 51 981925044
                 phone
+
+            const { data: newLead, error: createError } = await supabase
+                .from('leads')
+                .insert({
+                    user_id: userId,
+                    nome: `WhatsApp ${formattedPhone}`,
+                    contato: phone,
+                    status: 'novo',
+                    notas: 'Lead criado automaticamente via WhatsApp',
+                    conversation_history: [{
+                        type: 'lead',
+                        content: text,
+                        timestamp: timestamp || new Date().toISOString()
+                    }],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single()
+
+            if (createError) {
+                console.error('[WhatsApp Incoming] Error creating lead:', createError)
+                return NextResponse.json({ error: 'Failed to create lead' }, { status: 500 })
+            }
+
+            console.log('[WhatsApp Incoming] ✅ New lead created:', newLead.nome)
+
+            return NextResponse.json({
+                success: true,
+                leadId: newLead.id,
+                leadName: newLead.nome,
+                created: true
             })
         }
 
