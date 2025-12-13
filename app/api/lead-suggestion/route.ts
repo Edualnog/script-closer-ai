@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json()
-        const { leadName, leadStatus, leadNotas, lastContactDate, productName } = body
+        const { leadName, leadStatus, leadNotas, lastContactDate, productName, conversationHistory } = body
 
         const openai = new OpenAI()
 
@@ -42,6 +42,13 @@ export async function POST(request: Request) {
             }
         }
 
+        // Format conversation history if available
+        const historyText = conversationHistory && conversationHistory.length > 0
+            ? conversationHistory.map((msg: any, i: number) =>
+                `${msg.type === 'you' ? 'VOCÊ' : 'LEAD'}: "${msg.content}"`
+            ).join('\n')
+            : ''
+
         const systemPrompt = `
 Você é um especialista em vendas pelo WhatsApp. Gere UMA mensagem pronta para enviar ao lead.
 
@@ -50,6 +57,7 @@ ${productName ? `PRODUTO/SERVIÇO: ${productName}` : ''}
 STATUS: ${leadStatus}
 ${leadNotas ? `NOTAS SOBRE O LEAD: ${leadNotas}` : ''}
 ${daysSinceContact !== null ? `DIAS DESDE ÚLTIMO CONTATO: ${daysSinceContact}` : 'PRIMEIRO CONTATO'}
+${historyText ? `\nHISTÓRICO DA CONVERSA:\n${historyText}` : ''}
 
 CONTEXTO: ${getContextByStatus()}
 
@@ -57,8 +65,8 @@ REGRAS:
 1. Mensagem curta (2-3 linhas máximo)
 2. Tom amigável e natural de WhatsApp
 3. Personalize usando o nome do lead
-4. Termine com pergunta ou call-to-action claro
-5. Sem emoji excessivo (máximo 1)
+4. ${historyText ? 'Continue a conversa de onde parou, fazendo referência ao último assunto discutido' : 'Termine com pergunta ou call-to-action claro'}
+5. SEM emoji
 6. Use "você" normalmente
 
 Responda APENAS com a mensagem pronta, sem aspas ou explicações.

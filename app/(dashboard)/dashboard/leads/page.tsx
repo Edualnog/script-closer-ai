@@ -11,6 +11,7 @@ interface Lead {
     notas: string
     created_at: string
     updated_at: string
+    conversation_history?: any[]
     products?: { nome: string }
     scripts?: { mensagem_abertura: string }
 }
@@ -190,7 +191,8 @@ export default function LeadsPage() {
                     leadStatus: lead.status,
                     leadNotas: lead.notas,
                     lastContactDate: lead.updated_at,
-                    productName: lead.products?.nome
+                    productName: lead.products?.nome,
+                    conversationHistory: lead.conversation_history
                 })
             })
 
@@ -378,7 +380,7 @@ export default function LeadsPage() {
                                                     {/* AI Suggestion Button */}
                                                     <button
                                                         onClick={() => getSuggestion(lead)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
                                                         title="Gerar sugestão de mensagem"
                                                     >
                                                         <Sparkles className="w-3.5 h-3.5" />
@@ -538,21 +540,21 @@ export default function LeadsPage() {
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                         <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-5 text-white">
+                            <div className="bg-gray-900 p-5 text-white">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                                             <Sparkles className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <h2 className="font-semibold">Sugestão para {selectedLead.nome}</h2>
-                                            <p className="text-sm text-white/80">
+                                            <p className="text-sm text-white/70">
                                                 Status: {statusConfig[selectedLead.status]?.label || selectedLead.status}
                                             </p>
                                         </div>
                                     </div>
                                     <button onClick={() => setSelectedLead(null)}>
-                                        <X className="w-5 h-5 text-white/80 hover:text-white" />
+                                        <X className="w-5 h-5 text-white/70 hover:text-white" />
                                     </button>
                                 </div>
                             </div>
@@ -574,8 +576,8 @@ export default function LeadsPage() {
                                             <button
                                                 onClick={copySuggestion}
                                                 className={`flex-1 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${copied
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                     }`}
                                             >
                                                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
