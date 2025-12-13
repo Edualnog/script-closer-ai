@@ -114,7 +114,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
             <Link
                 href="/dashboard"
                 onClick={handleLinkClick}
-                className="mx-2 mb-2 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg text-sm font-medium shadow-sm hover:bg-green-700 transition-colors"
+                className="mx-2 mb-2 flex items-center justify-center gap-2 bg-gray-900 text-white py-2.5 rounded-lg text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors"
             >
                 <Send className="w-4 h-4" />
                 <span>Disparos em Massa</span>
@@ -147,29 +147,6 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
                 <FileText className="w-4 h-4" />
                 <span>Templates</span>
             </Link>
-
-            {/* WhatsApp Connect Button */}
-            <button
-                onClick={() => setShowWhatsApp(true)}
-                className={cn(
-                    "mx-2 mb-4 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isConnected
-                        ? "bg-green-500 text-white hover:bg-green-600"
-                        : "text-green-600 hover:bg-green-50 border border-green-200"
-                )}
-            >
-                {isConnected ? (
-                    <>
-                        <Check className="w-4 h-4" />
-                        <span>WhatsApp Conectado</span>
-                    </>
-                ) : (
-                    <>
-                        <Smartphone className="w-4 h-4" />
-                        <span>Conectar WhatsApp</span>
-                    </>
-                )}
-            </button>
 
             {/* WhatsApp Modal */}
             <WhatsAppConnect
@@ -231,6 +208,31 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
 
                 </ul>
             </nav>
+
+            {/* WhatsApp Connect Button - Bottom */}
+            <div className="mt-auto pt-4 border-t border-gray-200 mx-2">
+                <button
+                    onClick={() => setShowWhatsApp(true)}
+                    className={cn(
+                        "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        isConnected
+                            ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                            : "text-gray-600 hover:bg-gray-100 border border-gray-200"
+                    )}
+                >
+                    {isConnected ? (
+                        <>
+                            <Check className="w-4 h-4" />
+                            <span>WhatsApp Conectado</span>
+                        </>
+                    ) : (
+                        <>
+                            <Smartphone className="w-4 h-4" />
+                            <span>Conectar WhatsApp</span>
+                        </>
+                    )}
+                </button>
+            </div>
         </div>
     )
 }
