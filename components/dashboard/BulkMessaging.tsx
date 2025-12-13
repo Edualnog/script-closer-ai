@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
     Users,
     Send,
@@ -16,7 +16,9 @@ import {
     Loader2,
     MessageSquare,
     Package,
-    AlertTriangle
+    AlertTriangle,
+    Zap,
+    ChevronRight
 } from 'lucide-react'
 import { useWhatsApp } from './WhatsAppConnect'
 
@@ -45,23 +47,16 @@ interface CampaignStatus {
 }
 
 export default function BulkMessaging() {
-    // State
     const [leads, setLeads] = useState<Lead[]>([])
     const [products, setProducts] = useState<Product[]>([])
     const [selectedProduct, setSelectedProduct] = useState<string>('')
     const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set())
     const [message, setMessage] = useState('')
     const [isGenerating, setIsGenerating] = useState(false)
-
-    // Filters
     const [statusFilter, setStatusFilter] = useState<string[]>(['novo', 'em_conversa'])
-
-    // Delay config
     const [minDelay, setMinDelay] = useState(45)
     const [maxDelay, setMaxDelay] = useState(90)
     const [safeMode, setSafeMode] = useState(true)
-
-    // Campaign state
     const [campaign, setCampaign] = useState<CampaignStatus>({
         status: 'idle',
         total: 0,
@@ -69,11 +64,14 @@ export default function BulkMessaging() {
         failed: 0
     })
     const [countdown, setCountdown] = useState(0)
+    const campaignRef = useRef(campaign)
 
-    // WhatsApp hook
     const { isConnected, checkConnection, sendMessage } = useWhatsApp()
 
-    // Fetch leads and products
+    useEffect(() => {
+        campaignRef.current = campaign
+    }, [campaign])
+
     useEffect(() => {
         fetchLeads()
         fetchProducts()
@@ -85,7 +83,6 @@ export default function BulkMessaging() {
             const res = await fetch('/api/leads')
             if (res.ok) {
                 const data = await res.json()
-                // Ensure data is an array
                 setLeads(Array.isArray(data) ? data : [])
             }
         } catch (error) {
@@ -99,7 +96,6 @@ export default function BulkMessaging() {
             const res = await fetch('/api/products')
             if (res.ok) {
                 const data = await res.json()
-                // Ensure data is an array
                 setProducts(Array.isArray(data) ? data : [])
             }
         } catch (error) {
@@ -108,12 +104,10 @@ export default function BulkMessaging() {
         }
     }
 
-    // Filter leads
     const filteredLeads = leads.filter(lead =>
         statusFilter.includes(lead.status) && lead.contato
     )
 
-    // Toggle lead selection
     const toggleLead = (leadId: string) => {
         const newSelected = new Set(selectedLeads)
         if (newSelected.has(leadId)) {
@@ -124,7 +118,6 @@ export default function BulkMessaging() {
         setSelectedLeads(newSelected)
     }
 
-    // Select all filtered leads
     const selectAll = () => {
         if (selectedLeads.size === filteredLeads.length) {
             setSelectedLeads(new Set())
@@ -133,7 +126,6 @@ export default function BulkMessaging() {
         }
     }
 
-    // Generate message with AI
     const generateMessage = async () => {
         if (!selectedProduct) {
             alert('Selecione um produto primeiro')
@@ -165,7 +157,6 @@ export default function BulkMessaging() {
         }
     }
 
-    // Start campaign
     const startCampaign = async () => {
         if (!isConnected) {
             alert('Conecte o WhatsApp primeiro!')
@@ -189,14 +180,12 @@ export default function BulkMessaging() {
             failed: 0
         })
 
-        // Get selected leads
         const leadsToSend = leads.filter(l => selectedLeads.has(l.id))
 
         for (let i = 0; i < leadsToSend.length; i++) {
             const lead = leadsToSend[i]
 
-            // Check if paused
-            if (campaign.status === 'paused') {
+            if (campaignRef.current.status === 'paused') {
                 break
             }
 
@@ -206,10 +195,7 @@ export default function BulkMessaging() {
             }))
 
             try {
-                // Personalize message
                 const personalizedMessage = message.replace(/{nome}/gi, lead.nome)
-
-                // Send message
                 const success = await sendMessage(lead.contato, personalizedMessage)
 
                 if (success) {
@@ -218,7 +204,6 @@ export default function BulkMessaging() {
                         sent: prev.sent + 1
                     }))
 
-                    // Save to conversation history
                     await fetch('/api/leads', {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -247,18 +232,15 @@ export default function BulkMessaging() {
                 }))
             }
 
-            // Wait before next send (if not last)
             if (i < leadsToSend.length - 1) {
                 const delay = Math.floor(
                     Math.random() * (maxDelay - minDelay + 1) + minDelay
                 ) * 1000
 
-                // Safe mode: extra pause every 20 messages
-                const extraPause = safeMode && (i + 1) % 20 === 0 ? 300000 : 0 // 5 minutes
+                const extraPause = safeMode && (i + 1) % 20 === 0 ? 300000 : 0
 
                 const totalDelay = delay + extraPause
 
-                // Countdown
                 for (let sec = Math.floor(totalDelay / 1000); sec > 0; sec--) {
                     setCountdown(sec)
                     await new Promise(r => setTimeout(r, 1000))
@@ -274,7 +256,6 @@ export default function BulkMessaging() {
         }))
     }
 
-    // Pause/Resume campaign
     const togglePause = () => {
         setCampaign(prev => ({
             ...prev,
@@ -282,7 +263,6 @@ export default function BulkMessaging() {
         }))
     }
 
-    // Cancel campaign
     const cancelCampaign = () => {
         setCampaign({
             status: 'idle',
@@ -293,7 +273,6 @@ export default function BulkMessaging() {
         setCountdown(0)
     }
 
-    // Toggle status filter
     const toggleStatusFilter = (status: string) => {
         if (statusFilter.includes(status)) {
             setStatusFilter(statusFilter.filter(s => s !== status))
@@ -302,313 +281,336 @@ export default function BulkMessaging() {
         }
     }
 
-    const statusColors: Record<string, string> = {
-        novo: 'bg-green-500',
-        em_conversa: 'bg-yellow-500',
-        convertido: 'bg-blue-500',
-        perdido: 'bg-red-500'
+    const statusConfig: Record<string, { label: string, color: string, bg: string }> = {
+        novo: { label: 'Novo', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' },
+        em_conversa: { label: 'Em Conversa', color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30' },
+        convertido: { label: 'Convertido', color: 'text-blue-400', bg: 'bg-blue-500/20 border-blue-500/30' },
+        perdido: { label: 'Perdido', color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30' }
     }
 
-    const statusLabels: Record<string, string> = {
-        novo: 'Novo',
-        em_conversa: 'Em Conversa',
-        convertido: 'Convertido',
-        perdido: 'Perdido'
-    }
+    const progress = campaign.total > 0 ? (campaign.sent / campaign.total) * 100 : 0
 
     return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Send className="w-6 h-6 text-green-500" />
-                        Disparos em Massa
-                    </h1>
-                    <p className="text-gray-400 mt-1">
-                        Envie mensagens personalizadas para múltiplos leads
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
+                            <Zap className="w-6 h-6 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                            Disparos em Massa
+                        </h1>
+                    </div>
+                    <p className="text-slate-400 ml-14">
+                        Envie mensagens personalizadas para múltiplos leads automaticamente
                     </p>
                 </div>
 
+                {/* WhatsApp Status Banner */}
                 {!isConnected && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-400">
-                        <AlertTriangle className="w-4 h-4" />
-                        WhatsApp não conectado
+                    <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5 text-amber-400" />
+                            <span className="text-amber-200">WhatsApp não conectado. Conecte para iniciar os disparos.</span>
+                        </div>
                     </div>
                 )}
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column - Lead Selection */}
-                <div className="space-y-4">
-                    {/* Product Selection */}
-                    <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-                            <Package className="w-4 h-4" />
-                            Produto/Serviço
-                        </label>
-                        <select
-                            value={selectedProduct}
-                            onChange={(e) => setSelectedProduct(e.target.value)}
-                            className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2 text-white"
-                        >
-                            <option value="">Selecione um produto</option>
-                            {products.map(product => (
-                                <option key={product.id} value={product.id}>
-                                    {product.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Filters */}
-                    <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-3">
-                            <Filter className="w-4 h-4" />
-                            Filtrar por Status
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {Object.entries(statusLabels).map(([key, label]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => toggleStatusFilter(key)}
-                                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${statusFilter.includes(key)
-                                        ? `${statusColors[key]} text-white`
-                                        : 'bg-gray-700 text-gray-400'
-                                        }`}
+                <div className="grid grid-cols-12 gap-6">
+                    {/* Left Column - Configuration */}
+                    <div className="col-span-12 lg:col-span-5 space-y-5">
+                        {/* Product Card */}
+                        <div className="rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-slate-700/50 flex items-center gap-2">
+                                <Package className="w-4 h-4 text-violet-400" />
+                                <span className="text-sm font-medium text-slate-200">Produto/Serviço</span>
+                            </div>
+                            <div className="p-5">
+                                <select
+                                    value={selectedProduct}
+                                    onChange={(e) => setSelectedProduct(e.target.value)}
+                                    className="w-full bg-slate-900/50 border border-slate-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all"
                                 >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Lead List */}
-                    <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
-                                <Users className="w-4 h-4" />
-                                Leads ({selectedLeads.size} de {filteredLeads.length})
-                            </label>
-                            <button
-                                onClick={selectAll}
-                                className="text-sm text-green-500 hover:text-green-400"
-                            >
-                                {selectedLeads.size === filteredLeads.length ? 'Desmarcar todos' : 'Selecionar todos'}
-                            </button>
+                                    <option value="">Selecione um produto</option>
+                                    {products.map(product => (
+                                        <option key={product.id} value={product.id}>
+                                            {product.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
-                        <div className="max-h-64 overflow-y-auto space-y-2">
-                            {filteredLeads.length === 0 ? (
-                                <p className="text-gray-500 text-center py-4">
-                                    Nenhum lead encontrado com os filtros selecionados
-                                </p>
-                            ) : (
-                                filteredLeads.map(lead => (
-                                    <label
-                                        key={lead.id}
-                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedLeads.has(lead.id)
-                                            ? 'bg-green-500/20 border border-green-500/50'
-                                            : 'bg-[#2a2a2a] border border-transparent hover:border-gray-600'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedLeads.has(lead.id)}
-                                            onChange={() => toggleLead(lead.id)}
-                                            className="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500"
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-white text-sm font-medium truncate">
-                                                {lead.nome}
-                                            </p>
-                                            <p className="text-gray-500 text-xs truncate">
-                                                {lead.contato}
-                                            </p>
-                                        </div>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[lead.status]} text-white`}>
-                                            {statusLabels[lead.status]}
+                        {/* Filter Card */}
+                        <div className="rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-slate-700/50 flex items-center gap-2">
+                                <Filter className="w-4 h-4 text-violet-400" />
+                                <span className="text-sm font-medium text-slate-200">Filtrar por Status</span>
+                            </div>
+                            <div className="p-5">
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(statusConfig).map(([key, { label, bg }]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => toggleStatusFilter(key)}
+                                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${statusFilter.includes(key)
+                                                    ? bg + ' text-white'
+                                                    : 'bg-slate-900/50 border-slate-600/50 text-slate-400 hover:border-slate-500'
+                                                }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Leads Card */}
+                        <div className="rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-violet-400" />
+                                    <span className="text-sm font-medium text-slate-200">
+                                        Leads
+                                        <span className="ml-2 text-slate-400">
+                                            ({selectedLeads.size} de {filteredLeads.length})
                                         </span>
-                                    </label>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column - Message & Config */}
-                <div className="space-y-4">
-                    {/* Message */}
-                    <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
-                                <MessageSquare className="w-4 h-4" />
-                                Mensagem
-                            </label>
-                            <button
-                                onClick={generateMessage}
-                                disabled={isGenerating || !selectedProduct}
-                                className="flex items-center gap-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg text-sm text-white transition-colors"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Sparkles className="w-4 h-4" />
-                                )}
-                                Gerar com IA
-                            </button>
-                        </div>
-                        <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Digite sua mensagem... Use {nome} para personalizar com o nome do lead"
-                            rows={5}
-                            className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 resize-none"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                            💡 Use <code className="bg-gray-800 px-1 rounded">{'{nome}'}</code> para inserir o nome do lead automaticamente
-                        </p>
-                    </div>
-
-                    {/* Delay Config */}
-                    <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-3">
-                            <Clock className="w-4 h-4" />
-                            Intervalo entre envios
-                        </label>
-                        <div className="flex items-center gap-4">
-                            <div className="flex-1">
-                                <label className="text-xs text-gray-500">Mínimo (seg)</label>
-                                <input
-                                    type="number"
-                                    value={minDelay}
-                                    onChange={(e) => setMinDelay(Number(e.target.value))}
-                                    min={30}
-                                    max={300}
-                                    className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <label className="text-xs text-gray-500">Máximo (seg)</label>
-                                <input
-                                    type="number"
-                                    value={maxDelay}
-                                    onChange={(e) => setMaxDelay(Number(e.target.value))}
-                                    min={30}
-                                    max={300}
-                                    className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                />
-                            </div>
-                        </div>
-
-                        <label className="flex items-center gap-2 mt-4 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={safeMode}
-                                onChange={(e) => setSafeMode(e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500"
-                            />
-                            <Shield className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-gray-300">
-                                Modo seguro (pausa 5min a cada 20 msgs)
-                            </span>
-                        </label>
-                    </div>
-
-                    {/* Campaign Progress */}
-                    {campaign.status !== 'idle' && (
-                        <div className="bg-[#1e1e1e] border border-gray-800 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-sm font-medium text-gray-300">
-                                    {campaign.status === 'running' && '🚀 Disparando...'}
-                                    {campaign.status === 'paused' && '⏸️ Pausado'}
-                                    {campaign.status === 'completed' && '✅ Concluído'}
-                                </span>
-                                {campaign.currentLead && (
-                                    <span className="text-xs text-gray-500">
-                                        Enviando para: {campaign.currentLead}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Progress bar */}
-                            <div className="w-full bg-gray-700 rounded-full h-3 mb-3">
-                                <div
-                                    className="bg-green-500 h-3 rounded-full transition-all duration-300"
-                                    style={{ width: `${(campaign.sent / campaign.total) * 100}%` }}
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-4">
-                                    <span className="flex items-center gap-1 text-green-400">
-                                        <CheckCircle className="w-4 h-4" />
-                                        {campaign.sent}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-red-400">
-                                        <XCircle className="w-4 h-4" />
-                                        {campaign.failed}
-                                    </span>
-                                    <span className="text-gray-500">
-                                        de {campaign.total}
                                     </span>
                                 </div>
-                                {countdown > 0 && campaign.status === 'running' && (
-                                    <span className="text-gray-400">
-                                        ⏳ Próximo em: {countdown}s
-                                    </span>
+                                <button
+                                    onClick={selectAll}
+                                    className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                                >
+                                    {selectedLeads.size === filteredLeads.length ? 'Desmarcar' : 'Selecionar todos'}
+                                </button>
+                            </div>
+                            <div className="p-3 max-h-72 overflow-y-auto">
+                                {filteredLeads.length === 0 ? (
+                                    <p className="text-slate-500 text-center py-8">
+                                        Nenhum lead encontrado
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {filteredLeads.map(lead => (
+                                            <label
+                                                key={lead.id}
+                                                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${selectedLeads.has(lead.id)
+                                                        ? 'bg-violet-500/20 border border-violet-500/30'
+                                                        : 'bg-slate-900/30 border border-transparent hover:bg-slate-900/50'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedLeads.has(lead.id)}
+                                                    onChange={() => toggleLead(lead.id)}
+                                                    className="w-4 h-4 rounded border-slate-600 text-violet-500 focus:ring-violet-500/50 bg-slate-900"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-white text-sm font-medium truncate">
+                                                        {lead.nome}
+                                                    </p>
+                                                    <p className="text-slate-500 text-xs truncate">
+                                                        {lead.contato}
+                                                    </p>
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded-lg text-xs border ${statusConfig[lead.status]?.bg || 'bg-slate-700'} ${statusConfig[lead.status]?.color || 'text-slate-300'}`}>
+                                                    {statusConfig[lead.status]?.label || lead.status}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                        {campaign.status === 'idle' ? (
-                            <button
-                                onClick={startCampaign}
-                                disabled={!isConnected || selectedLeads.size === 0 || !message.trim()}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-white font-medium transition-colors"
-                            >
-                                <Send className="w-5 h-5" />
-                                Iniciar Disparo ({selectedLeads.size} leads)
-                            </button>
-                        ) : campaign.status === 'completed' ? (
-                            <button
-                                onClick={cancelCampaign}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 rounded-xl text-white font-medium transition-colors"
-                            >
-                                Novo Disparo
-                            </button>
-                        ) : (
-                            <>
+                    {/* Right Column - Message & Actions */}
+                    <div className="col-span-12 lg:col-span-7 space-y-5">
+                        {/* Message Card */}
+                        <div className="rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-violet-400" />
+                                    <span className="text-sm font-medium text-slate-200">Mensagem</span>
+                                </div>
                                 <button
-                                    onClick={togglePause}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white font-medium transition-colors ${campaign.status === 'paused'
-                                        ? 'bg-green-600 hover:bg-green-700'
-                                        : 'bg-yellow-600 hover:bg-yellow-700'
-                                        }`}
+                                    onClick={generateMessage}
+                                    disabled={isGenerating || !selectedProduct}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-all shadow-lg shadow-violet-500/25"
                                 >
-                                    {campaign.status === 'paused' ? (
-                                        <>
-                                            <Play className="w-5 h-5" />
-                                            Continuar
-                                        </>
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
-                                        <>
-                                            <Pause className="w-5 h-5" />
-                                            Pausar
-                                        </>
+                                        <Sparkles className="w-4 h-4" />
                                     )}
+                                    Gerar com IA
                                 </button>
+                            </div>
+                            <div className="p-5">
+                                <textarea
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Digite sua mensagem... Use {nome} para personalizar"
+                                    rows={6}
+                                    className="w-full bg-slate-900/50 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all"
+                                />
+                                <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-violet-400" />
+                                    Use <code className="bg-slate-900 px-1.5 py-0.5 rounded text-violet-300">{'{nome}'}</code> para inserir o nome automaticamente
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Config Card */}
+                        <div className="rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-slate-700/50 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-violet-400" />
+                                <span className="text-sm font-medium text-slate-200">Configurações de Envio</span>
+                            </div>
+                            <div className="p-5">
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="text-xs text-slate-400 block mb-2">Delay Mínimo (seg)</label>
+                                        <input
+                                            type="number"
+                                            value={minDelay}
+                                            onChange={(e) => setMinDelay(Number(e.target.value))}
+                                            min={30}
+                                            max={300}
+                                            className="w-full bg-slate-900/50 border border-slate-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-400 block mb-2">Delay Máximo (seg)</label>
+                                        <input
+                                            type="number"
+                                            value={maxDelay}
+                                            onChange={(e) => setMaxDelay(Number(e.target.value))}
+                                            min={30}
+                                            max={300}
+                                            className="w-full bg-slate-900/50 border border-slate-600/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                                        />
+                                    </div>
+                                </div>
+
+                                <label className="flex items-center gap-3 p-4 rounded-xl bg-slate-900/30 border border-slate-700/50 cursor-pointer hover:bg-slate-900/50 transition-all">
+                                    <input
+                                        type="checkbox"
+                                        checked={safeMode}
+                                        onChange={(e) => setSafeMode(e.target.checked)}
+                                        className="w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500/50 bg-slate-900"
+                                    />
+                                    <Shield className="w-4 h-4 text-emerald-400" />
+                                    <div>
+                                        <span className="text-sm text-white">Modo Seguro</span>
+                                        <span className="text-xs text-slate-500 block">Pausa automática de 5min a cada 20 mensagens</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Progress Card */}
+                        {campaign.status !== 'idle' && (
+                            <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-500/20 backdrop-blur-sm overflow-hidden">
+                                <div className="p-5">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="text-white font-medium">
+                                            {campaign.status === 'running' && '🚀 Enviando...'}
+                                            {campaign.status === 'paused' && '⏸️ Pausado'}
+                                            {campaign.status === 'completed' && '✅ Concluído!'}
+                                        </span>
+                                        {campaign.currentLead && (
+                                            <span className="text-sm text-slate-400">
+                                                → {campaign.currentLead}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-4">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-4">
+                                            <span className="flex items-center gap-1 text-emerald-400">
+                                                <CheckCircle className="w-4 h-4" />
+                                                {campaign.sent}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-red-400">
+                                                <XCircle className="w-4 h-4" />
+                                                {campaign.failed}
+                                            </span>
+                                            <span className="text-slate-500">
+                                                de {campaign.total}
+                                            </span>
+                                        </div>
+                                        {countdown > 0 && campaign.status === 'running' && (
+                                            <span className="text-violet-300">
+                                                Próximo em {countdown}s
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            {campaign.status === 'idle' ? (
+                                <button
+                                    onClick={startCampaign}
+                                    disabled={!isConnected || selectedLeads.size === 0 || !message.trim()}
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg shadow-violet-500/25"
+                                >
+                                    <Send className="w-5 h-5" />
+                                    Iniciar Disparo
+                                    <span className="ml-1 px-2 py-0.5 rounded-lg bg-white/20 text-sm">
+                                        {selectedLeads.size} leads
+                                    </span>
+                                </button>
+                            ) : campaign.status === 'completed' ? (
                                 <button
                                     onClick={cancelCampaign}
-                                    className="px-4 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-medium transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-700 text-white font-medium hover:bg-slate-600 transition-all"
                                 >
-                                    <X className="w-5 h-5" />
+                                    Novo Disparo
                                 </button>
-                            </>
-                        )}
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={togglePause}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-medium transition-all ${campaign.status === 'paused'
+                                                ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white'
+                                                : 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                                            }`}
+                                    >
+                                        {campaign.status === 'paused' ? (
+                                            <>
+                                                <Play className="w-5 h-5" />
+                                                Continuar
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Pause className="w-5 h-5" />
+                                                Pausar
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={cancelCampaign}
+                                        className="px-6 py-4 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
