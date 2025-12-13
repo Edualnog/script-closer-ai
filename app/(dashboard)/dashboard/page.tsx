@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { AICommandCenter } from '@/components/dashboard/AICommandCenter'
+import BulkMessaging from '@/components/dashboard/BulkMessaging'
 import { redirect } from 'next/navigation'
 
 export default async function DashboardPage() {
@@ -11,6 +11,6 @@ export default async function DashboardPage() {
     }
 
     return (
-        <AICommandCenter />
+        <BulkMessaging />
     )
 }
