@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { User, Phone, MessageSquare, CheckCircle, XCircle, Clock, Plus, Trash2, X, Upload, Download, Send, Sparkles, Copy, Check, Loader2 } from 'lucide-react'
+import { User, Phone, MessageSquare, CheckCircle, XCircle, Clock, Plus, Trash2, X, Upload, Download, Send, Sparkles, Copy, Check, Loader2, History, ArrowRight } from 'lucide-react'
 
 interface Lead {
     id: string
@@ -27,6 +27,9 @@ export default function LeadsPage() {
     const [suggestion, setSuggestion] = useState('')
     const [loadingSuggestion, setLoadingSuggestion] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [historyLead, setHistoryLead] = useState<Lead | null>(null)
+    const [newMessage, setNewMessage] = useState('')
+    const [messageType, setMessageType] = useState<'you' | 'lead'>('you')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const statusConfig = {
@@ -230,6 +233,63 @@ export default function LeadsPage() {
         window.open(url, '_blank')
     }
 
+    // Add message to lead conversation history
+    const addMessageToHistory = async () => {
+        if (!historyLead || !newMessage.trim()) return
+
+        const history = historyLead.conversation_history || []
+        const updatedHistory = [
+            ...history,
+            {
+                type: messageType,
+                content: newMessage.trim(),
+                timestamp: new Date().toISOString()
+            }
+        ]
+
+        try {
+            await fetch('/api/leads', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: historyLead.id,
+                    conversation_history: updatedHistory
+                })
+            })
+
+            // Update local state
+            setHistoryLead({ ...historyLead, conversation_history: updatedHistory })
+            setNewMessage('')
+            fetchLeads() // Refresh list
+        } catch (error) {
+            console.error('Error adding message:', error)
+        }
+    }
+
+    // Delete message from history
+    const deleteMessage = async (index: number) => {
+        if (!historyLead) return
+
+        const history = [...(historyLead.conversation_history || [])]
+        history.splice(index, 1)
+
+        try {
+            await fetch('/api/leads', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: historyLead.id,
+                    conversation_history: history
+                })
+            })
+
+            setHistoryLead({ ...historyLead, conversation_history: history })
+            fetchLeads()
+        } catch (error) {
+            console.error('Error deleting message:', error)
+        }
+    }
+
     const stats = {
         total: leads.length,
         novos: leads.filter(l => l.status === 'novo').length,
@@ -394,6 +454,15 @@ export default function LeadsPage() {
                                                         title="Enviar mensagem no WhatsApp"
                                                     >
                                                         <Send className="w-3.5 h-3.5" />
+                                                    </button>
+
+                                                    {/* History Button */}
+                                                    <button
+                                                        onClick={() => setHistoryLead(lead)}
+                                                        className="p-1.5 text-gray-400 hover:text-gray-700 transition-colors"
+                                                        title="Ver histórico de conversa"
+                                                    >
+                                                        <History className="w-4 h-4" />
                                                     </button>
 
                                                     {/* Delete Button */}
@@ -595,6 +664,110 @@ export default function LeadsPage() {
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Conversation History Modal */}
+                {historyLead && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
+                            {/* Header */}
+                            <div className="bg-gray-900 p-5 text-white">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                            <History className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-semibold">Histórico - {historyLead.nome}</h2>
+                                            <p className="text-sm text-white/70">
+                                                {historyLead.conversation_history?.length || 0} mensagens
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setHistoryLead(null)}>
+                                        <X className="w-5 h-5 text-white/70 hover:text-white" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Messages */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                                {(!historyLead.conversation_history || historyLead.conversation_history.length === 0) ? (
+                                    <div className="text-center py-8 text-gray-400">
+                                        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                        <p>Nenhuma mensagem registrada</p>
+                                        <p className="text-xs mt-1">Adicione mensagens abaixo</p>
+                                    </div>
+                                ) : (
+                                    historyLead.conversation_history.map((msg: any, index: number) => (
+                                        <div
+                                            key={index}
+                                            className={`flex ${msg.type === 'you' ? 'justify-end' : 'justify-start'}`}
+                                        >
+                                            <div
+                                                className={`relative group max-w-[80%] rounded-2xl px-4 py-2 ${msg.type === 'you'
+                                                        ? 'bg-gray-900 text-white rounded-br-md'
+                                                        : 'bg-white text-gray-900 border border-gray-200 rounded-bl-md'
+                                                    }`}
+                                            >
+                                                <p className="text-sm">{msg.content}</p>
+                                                <p className={`text-[10px] mt-1 ${msg.type === 'you' ? 'text-white/50' : 'text-gray-400'}`}>
+                                                    {msg.type === 'you' ? 'Você' : 'Lead'} • {new Date(msg.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                                <button
+                                                    onClick={() => deleteMessage(index)}
+                                                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white hidden group-hover:flex items-center justify-center"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Add Message Form */}
+                            <div className="p-4 border-t border-gray-200 bg-white">
+                                <div className="flex gap-2 mb-3">
+                                    <button
+                                        onClick={() => setMessageType('you')}
+                                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${messageType === 'you'
+                                                ? 'bg-gray-900 text-white'
+                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        Você enviou
+                                    </button>
+                                    <button
+                                        onClick={() => setMessageType('lead')}
+                                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${messageType === 'lead'
+                                                ? 'bg-gray-900 text-white'
+                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        Lead enviou
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && addMessageToHistory()}
+                                        placeholder="Digite a mensagem..."
+                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                                    />
+                                    <button
+                                        onClick={addMessageToHistory}
+                                        disabled={!newMessage.trim()}
+                                        className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 hover:bg-gray-800 transition-colors"
+                                    >
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
