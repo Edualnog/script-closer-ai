@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { User, Phone, MessageSquare, CheckCircle, XCircle, Clock, Plus, Trash2, X, Upload, Download, Send } from 'lucide-react'
+import { User, Phone, MessageSquare, CheckCircle, XCircle, Clock, Plus, Trash2, X, Upload, Download, Send, Sparkles, Copy, Check, Loader2 } from 'lucide-react'
 
 interface Lead {
     id: string
@@ -22,6 +22,10 @@ export default function LeadsPage() {
     const [showImportModal, setShowImportModal] = useState(false)
     const [importText, setImportText] = useState('')
     const [newLead, setNewLead] = useState({ nome: '', contato: '', notas: '' })
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+    const [suggestion, setSuggestion] = useState('')
+    const [loadingSuggestion, setLoadingSuggestion] = useState(false)
+    const [copied, setCopied] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const statusConfig = {
@@ -167,6 +171,60 @@ export default function LeadsPage() {
         }
 
         const url = `https://wa.me/${phone}`
+        window.open(url, '_blank')
+    }
+
+    // Get AI suggestion for a lead
+    const getSuggestion = async (lead: Lead) => {
+        setSelectedLead(lead)
+        setSuggestion('')
+        setLoadingSuggestion(true)
+        setCopied(false)
+
+        try {
+            const res = await fetch('/api/lead-suggestion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    leadName: lead.nome,
+                    leadStatus: lead.status,
+                    leadNotas: lead.notas,
+                    lastContactDate: lead.updated_at,
+                    productName: lead.products?.nome
+                })
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                setSuggestion(data.suggestion)
+            }
+        } catch (error) {
+            console.error('Error getting suggestion:', error)
+            setSuggestion('Erro ao gerar sugestão. Tente novamente.')
+        } finally {
+            setLoadingSuggestion(false)
+        }
+    }
+
+    // Copy suggestion and send via WhatsApp
+    const copySuggestion = async () => {
+        await navigator.clipboard.writeText(suggestion)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    const sendSuggestionWhatsApp = () => {
+        if (!selectedLead?.contato) {
+            alert('Este lead não tem contato cadastrado')
+            return
+        }
+
+        let phone = selectedLead.contato.replace(/\D/g, '')
+        if (!phone.startsWith('55')) {
+            phone = '55' + phone
+        }
+
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(suggestion)}`
         window.open(url, '_blank')
     }
 
@@ -317,6 +375,16 @@ export default function LeadsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    {/* AI Suggestion Button */}
+                                                    <button
+                                                        onClick={() => getSuggestion(lead)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity"
+                                                        title="Gerar sugestão de mensagem"
+                                                    >
+                                                        <Sparkles className="w-3.5 h-3.5" />
+                                                        Sugerir
+                                                    </button>
+
                                                     {/* WhatsApp Button */}
                                                     <button
                                                         onClick={() => openWhatsApp(lead)}
@@ -324,7 +392,6 @@ export default function LeadsPage() {
                                                         title="Enviar mensagem no WhatsApp"
                                                     >
                                                         <Send className="w-3.5 h-3.5" />
-                                                        WhatsApp
                                                     </button>
 
                                                     {/* Delete Button */}
@@ -461,6 +528,71 @@ export default function LeadsPage() {
                                     <Upload className="w-4 h-4" />
                                     Importar Leads
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* AI Suggestion Modal */}
+                {selectedLead && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-5 text-white">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                            <Sparkles className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-semibold">Sugestão para {selectedLead.nome}</h2>
+                                            <p className="text-sm text-white/80">
+                                                Status: {statusConfig[selectedLead.status]?.label || selectedLead.status}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSelectedLead(null)}>
+                                        <X className="w-5 h-5 text-white/80 hover:text-white" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-5">
+                                {loadingSuggestion ? (
+                                    <div className="flex flex-col items-center justify-center py-8">
+                                        <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-3" />
+                                        <p className="text-gray-500 text-sm">Gerando sugestão inteligente...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{suggestion}</p>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={copySuggestion}
+                                                className={`flex-1 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${copied
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}
+                                            >
+                                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                                {copied ? 'Copiado!' : 'Copiar'}
+                                            </button>
+
+                                            <button
+                                                onClick={sendSuggestionWhatsApp}
+                                                disabled={!selectedLead.contato}
+                                                className="flex-1 py-2.5 bg-green-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-50"
+                                            >
+                                                <Send className="w-4 h-4" />
+                                                Enviar no WhatsApp
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
