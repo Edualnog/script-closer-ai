@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { User, Phone, MessageSquare, CheckCircle, XCircle, Clock, Plus, Trash2, X, Upload, Download, Send, Sparkles, Copy, Check, Loader2, History, ArrowRight } from 'lucide-react'
+import { useWhatsApp } from '@/components/dashboard/WhatsAppConnect'
 
 interface Lead {
     id: string
@@ -30,7 +31,9 @@ export default function LeadsPage() {
     const [historyLead, setHistoryLead] = useState<Lead | null>(null)
     const [newMessage, setNewMessage] = useState('')
     const [messageType, setMessageType] = useState<'you' | 'lead'>('you')
+    const [sending, setSending] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const { isConnected, checkConnection, sendMessage } = useWhatsApp()
 
     const statusConfig = {
         novo: { label: 'Novo', icon: Clock, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -41,6 +44,7 @@ export default function LeadsPage() {
 
     useEffect(() => {
         fetchLeads()
+        checkConnection()
     }, [])
 
     const fetchLeads = async () => {
@@ -709,8 +713,8 @@ export default function LeadsPage() {
                                         >
                                             <div
                                                 className={`relative group max-w-[80%] rounded-2xl px-4 py-2 ${msg.type === 'you'
-                                                        ? 'bg-gray-900 text-white rounded-br-md'
-                                                        : 'bg-white text-gray-900 border border-gray-200 rounded-bl-md'
+                                                    ? 'bg-gray-900 text-white rounded-br-md'
+                                                    : 'bg-white text-gray-900 border border-gray-200 rounded-bl-md'
                                                     }`}
                                             >
                                                 <p className="text-sm">{msg.content}</p>
@@ -735,8 +739,8 @@ export default function LeadsPage() {
                                     <button
                                         onClick={() => setMessageType('you')}
                                         className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${messageType === 'you'
-                                                ? 'bg-gray-900 text-white'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                            ? 'bg-gray-900 text-white'
+                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                             }`}
                                     >
                                         Você enviou
@@ -744,8 +748,8 @@ export default function LeadsPage() {
                                     <button
                                         onClick={() => setMessageType('lead')}
                                         className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${messageType === 'lead'
-                                                ? 'bg-gray-900 text-white'
-                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                            ? 'bg-gray-900 text-white'
+                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                             }`}
                                     >
                                         Lead enviou

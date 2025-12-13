@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users, FileText } from 'lucide-react'
+import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users, FileText, Smartphone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { WhatsAppConnect } from './WhatsAppConnect'
 
 interface SidebarContentProps {
     className?: string;
@@ -18,6 +19,7 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
     const supabase = createClient()
     const [projects, setProjects] = useState<any[]>([])
     const [searchQuery, setSearchQuery] = useState("")
+    const [showWhatsApp, setShowWhatsApp] = useState(false)
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -139,6 +141,21 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
                 <FileText className="w-4 h-4" />
                 <span>Templates</span>
             </Link>
+
+            {/* WhatsApp Connect Button */}
+            <button
+                onClick={() => setShowWhatsApp(true)}
+                className="mx-2 mb-4 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors text-green-600 hover:bg-green-50 border border-green-200"
+            >
+                <Smartphone className="w-4 h-4" />
+                <span>Conectar WhatsApp</span>
+            </button>
+
+            {/* WhatsApp Modal */}
+            <WhatsAppConnect
+                isOpen={showWhatsApp}
+                onClose={() => setShowWhatsApp(false)}
+            />
 
             <nav className="flex flex-1 flex-col mt-1">
                 <ul role="list" className="flex flex-1 flex-col gap-y-4">
