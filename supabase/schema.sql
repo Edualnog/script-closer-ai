@@ -62,12 +62,51 @@ create table public.scripts (
   follow_up jsonb,
   conversation_history jsonb, -- Saved conversation flow
   modelo_usado text,
+  -- Metrics columns
+  status text default 'em_andamento', -- em_andamento, convertido, perdido
+  mensagens_trocadas int default 0,
+  is_variant boolean default false,
+  parent_script_id uuid references public.scripts(id) on delete set null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table public.scripts enable row level security;
 create policy "Users can crud own scripts" on public.scripts for all using (auth.uid() = user_id);
+
+-- LEADS TABLE (for tracking contacted leads)
+create table public.leads (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references public.users(id) on delete cascade not null,
+  product_id uuid references public.products(id) on delete cascade,
+  script_id uuid references public.scripts(id) on delete set null,
+  nome text not null,
+  contato text, -- WhatsApp, email, phone
+  status text default 'novo', -- novo, em_conversa, convertido, perdido
+  notas text,
+  conversation_history jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.leads enable row level security;
+create policy "Users can crud own leads" on public.leads for all using (auth.uid() = user_id);
+
+-- SCRIPT TEMPLATES TABLE
+create table public.script_templates (
+  id uuid primary key default uuid_generate_v4(),
+  nome text not null,
+  categoria text not null, -- SaaS, Serviços, E-commerce, Consultoria
+  descricao text,
+  mensagem_abertura text not null,
+  roteiro_conversa text not null,
+  is_premium boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Templates are public (read-only for all)
+alter table public.script_templates enable row level security;
+create policy "Anyone can read templates" on public.script_templates for select using (true);
 
 -- USAGE STATS TABLE
 create table public.usage_stats (

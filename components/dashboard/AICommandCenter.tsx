@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { useSubscription } from "@/hooks/useSubscription"
 import { ScriptResultDisplay } from "./ScriptResultDisplay";
 import { TextShimmerWave } from "@/components/ui/TextShimmerWave";
+import { MetricsDashboard } from "./MetricsDashboard";
 
 interface AICommandCenterProps {
     initialChannel?: string;
@@ -229,10 +230,17 @@ export function AICommandCenter({ initialChannel, initialProduct }: AICommandCen
     return (
         <div className="flex flex-col w-full">
 
+            {/* Metrics Section - Show when no result */}
+            {!result && !loading && (
+                <div className="w-full max-w-6xl mx-auto px-4 pt-6">
+                    <MetricsDashboard />
+                </div>
+            )}
+
             {/* Prompt Section - Only take full height when no result */}
             <div className={cn(
                 "flex flex-col items-center justify-center w-full relative px-4 py-8",
-                !result && "min-h-[80vh]"
+                !result && "min-h-[60vh]"
             )}>
 
                 {/* Loading State - Replaces the entire input section */}
