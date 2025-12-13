@@ -163,23 +163,58 @@ export default function LeadsPage() {
         reader.readAsText(file)
     }
 
-    // Open WhatsApp with lead contact (auto-add Brazil code)
-    const openWhatsApp = (lead: Lead) => {
+    // Open WhatsApp with lead contact or send directly when connected
+    const openWhatsApp = async (lead: Lead) => {
         if (!lead.contato) {
             alert('Este lead não tem contato cadastrado')
             return
         }
 
-        // Clean phone number (remove non-digits)
-        let phone = lead.contato.replace(/\D/g, '')
+        // Check if WhatsApp is connected
+        const connected = await checkConnection()
 
-        // Add Brazil country code if not present
-        if (!phone.startsWith('55')) {
-            phone = '55' + phone
+        if (connected) {
+            // Send directly via API
+            setSending(lead.id)
+            try {
+                // For now, send a simple greeting - you might want to prompt for message
+                const defaultMessage = `Oi ${lead.nome}! Tudo bem?`
+                const success = await sendMessage(lead.contato, defaultMessage)
+
+                if (success) {
+                    alert('✅ Mensagem enviada com sucesso!')
+                    // Add to conversation history
+                    const history = lead.conversation_history || []
+                    await fetch('/api/leads', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: lead.id,
+                            conversation_history: [
+                                ...history,
+                                { type: 'you', content: defaultMessage, timestamp: new Date().toISOString() }
+                            ]
+                        })
+                    })
+                    fetchLeads()
+                } else {
+                    alert('❌ Erro ao enviar mensagem')
+                }
+            } catch (error) {
+                console.error('Error sending message:', error)
+                alert('❌ Erro ao enviar mensagem')
+            } finally {
+                setSending(null)
+            }
+        } else {
+            // Fallback to wa.me link
+            let phone = lead.contato.replace(/\D/g, '')
+            if (!phone.startsWith('55')) {
+                phone = '55' + phone
+            }
+            const url = `https://wa.me/${phone}`
+            window.open(url, '_blank')
         }
-
-        const url = `https://wa.me/${phone}`
-        window.open(url, '_blank')
     }
 
     // Get AI suggestion for a lead
@@ -454,10 +489,15 @@ export default function LeadsPage() {
                                                     {/* WhatsApp Button */}
                                                     <button
                                                         onClick={() => openWhatsApp(lead)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors"
-                                                        title="Enviar mensagem no WhatsApp"
+                                                        disabled={sending === lead.id}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                                                        title={isConnected ? "Enviar mensagem direta" : "Abrir WhatsApp Web"}
                                                     >
-                                                        <Send className="w-3.5 h-3.5" />
+                                                        {sending === lead.id ? (
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        ) : (
+                                                            <Send className="w-3.5 h-3.5" />
+                                                        )}
                                                     </button>
 
                                                     {/* History Button */}
