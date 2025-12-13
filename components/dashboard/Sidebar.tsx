@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users } from 'lucide-react'
+import { PlusCircle, Search, Library, Sparkles, Folder, Plus, Home, Megaphone, Users, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -124,6 +124,20 @@ export function SidebarContent({ className, onClose }: SidebarContentProps) {
             >
                 <Users className="w-4 h-4" />
                 <span>Meus Leads</span>
+            </Link>
+
+            <Link
+                href="/dashboard/templates"
+                onClick={handleLinkClick}
+                className={cn(
+                    "mx-2 mb-4 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors",
+                    pathname === '/dashboard/templates'
+                        ? 'bg-gray-200 text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-100'
+                )}
+            >
+                <FileText className="w-4 h-4" />
+                <span>Templates</span>
             </Link>
 
             <nav className="flex flex-1 flex-col mt-1">
