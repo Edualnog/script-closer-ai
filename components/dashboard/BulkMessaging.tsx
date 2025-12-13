@@ -85,10 +85,12 @@ export default function BulkMessaging() {
             const res = await fetch('/api/leads')
             if (res.ok) {
                 const data = await res.json()
-                setLeads(data)
+                // Ensure data is an array
+                setLeads(Array.isArray(data) ? data : [])
             }
         } catch (error) {
             console.error('Error fetching leads:', error)
+            setLeads([])
         }
     }
 
@@ -97,10 +99,12 @@ export default function BulkMessaging() {
             const res = await fetch('/api/products')
             if (res.ok) {
                 const data = await res.json()
-                setProducts(data)
+                // Ensure data is an array
+                setProducts(Array.isArray(data) ? data : [])
             }
         } catch (error) {
             console.error('Error fetching products:', error)
+            setProducts([])
         }
     }
 
@@ -369,8 +373,8 @@ export default function BulkMessaging() {
                                     key={key}
                                     onClick={() => toggleStatusFilter(key)}
                                     className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${statusFilter.includes(key)
-                                            ? `${statusColors[key]} text-white`
-                                            : 'bg-gray-700 text-gray-400'
+                                        ? `${statusColors[key]} text-white`
+                                        : 'bg-gray-700 text-gray-400'
                                         }`}
                                 >
                                     {label}
@@ -404,8 +408,8 @@ export default function BulkMessaging() {
                                     <label
                                         key={lead.id}
                                         className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedLeads.has(lead.id)
-                                                ? 'bg-green-500/20 border border-green-500/50'
-                                                : 'bg-[#2a2a2a] border border-transparent hover:border-gray-600'
+                                            ? 'bg-green-500/20 border border-green-500/50'
+                                            : 'bg-[#2a2a2a] border border-transparent hover:border-gray-600'
                                             }`}
                                     >
                                         <input
@@ -581,8 +585,8 @@ export default function BulkMessaging() {
                                 <button
                                     onClick={togglePause}
                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white font-medium transition-colors ${campaign.status === 'paused'
-                                            ? 'bg-green-600 hover:bg-green-700'
-                                            : 'bg-yellow-600 hover:bg-yellow-700'
+                                        ? 'bg-green-600 hover:bg-green-700'
+                                        : 'bg-yellow-600 hover:bg-yellow-700'
                                         }`}
                                 >
                                     {campaign.status === 'paused' ? (
